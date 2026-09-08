@@ -16,7 +16,12 @@ const IKOYI = { lat: 6.4474, lon: 3.4334 };
 const LAGOS_OFFSET_SECONDS = 3600; // WAT, UTC+1, no DST
 const SCORE_HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 const TIDE_CACHE_HOURS = 20; // re-fetch tide extremes at most once per ~day
-const FORECAST_DAYS = 14; // temporary — 2-week category calibration run
+// Requested from Open-Meteo, which fetches this many days without erroring —
+// but its marine model's real skillful range turned out to be ~10 days
+// (confirmed via a live 14-day test run: days 11-14 came back null). 7 stays
+// safely inside that window; buildDay() drops any day with no real data
+// regardless, so this is a soft ceiling, not a promise every day is real.
+const FORECAST_DAYS = 7;
 
 const OUT_PATH = new URL('../data/forecast.json', import.meta.url);
 
@@ -130,7 +135,7 @@ function deriveCall(score) {
 }
 
 function avgOf(scores, hours) {
-  const vals = hours.filter((h) => h in scores).map((h) => scores[h]);
+  const vals = hours.map((h) => scores[h]).filter((v) => v != null);
   if (vals.length === 0) return null;
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
@@ -161,7 +166,7 @@ function classifyDay({ avg, scores, outerHeightM, windKmh, rain }) {
 
 function computeWindowScore(scores, start, end) {
   const hours = Object.keys(scores).map(Number);
-  const inWindow = hours.filter((h) => h + 1 > start && h < end);
+  const inWindow = hours.filter((h) => h + 1 > start && h < end && scores[h] != null);
   if (inWindow.length === 0) return 0;
   return inWindow.reduce((sum, h) => sum + scores[h], 0) / inWindow.length;
 }
@@ -220,12 +225,21 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
     }
   }
 
+  // Open-Meteo's marine model accepts forecast_days up to 14 without erroring,
+  // but its actual skillful range is shorter — beyond it, hours come back as
+  // literal `null`, and JS's `null * x = 0` arithmetic would silently turn
+  // "no data" into a fake "flat" reading. Use `null` as an explicit
+  // no-data sentinel here instead, so it can't be mistaken for a real 0.
   const scores = {};
   for (const hour of SCORE_HOURS) {
     const wave = marineHours?.get(hour);
     const wind = nearestBy(beachWeather, hour, 'hour');
-    scores[hour] = wave ? computeHourScore(wave.period, wave.height, wind?.windKmh ?? 15) : 0;
+    scores[hour] = (wave && wave.height != null && wave.period != null)
+      ? computeHourScore(wave.period, wave.height, wind?.windKmh ?? 15)
+      : null;
   }
+  const hasAnyData = Object.values(scores).some((s) => s !== null);
+  if (!hasAnyData) return null; // no real forecast for this day yet — drop it rather than fabricate one
 
   // No High tide left to recommend (common for "today" once its tide has
   // already passed — WorldTides only returns future extremes) doesn't mean
@@ -238,7 +252,13 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
   const avg = Math.round(computeWindowScore(scores, tideStart, tideEnd));
 
   const headlineHour = best ? Math.round(best.decHour) : 12;
-  const headlineWave = marineHours?.get(Math.min(23, Math.max(0, headlineHour))) ?? { height: 0, period: 0, direction: 0 };
+  // Prefer the exact hour, but fall back to the nearest hour that actually
+  // has real (non-null) marine data rather than defaulting to a fake 0.
+  const validHours = [...(marineHours?.entries() ?? [])].filter(([, v]) => v.height != null && v.period != null);
+  const exact = marineHours?.get(Math.min(23, Math.max(0, headlineHour)));
+  const headlineWave = (exact && exact.height != null && exact.period != null)
+    ? exact
+    : (validHours.sort((a, b) => Math.abs(a[0] - headlineHour) - Math.abs(b[0] - headlineHour))[0]?.[1] ?? { height: 0, period: 0, direction: 0 });
   const headlineWind = nearestBy(beachWeather, headlineHour, 'hour');
   const windKmh = Math.round(headlineWind?.windKmh ?? 0);
 
@@ -250,6 +270,11 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
   const middayHome = nearestBy(homeWeather, 12, 'hour');
 
   const call = classifyDay({ avg, scores, outerHeightM: outerM, windKmh, rain: classifyRain(middayBeach) });
+
+  // null was only an internal "no data for this hour" sentinel — the shipped
+  // JSON's `scores` should stay a plain hour->number map for the frontend's
+  // conditions-strip rendering, which doesn't know about nulls.
+  const cleanScores = Object.fromEntries(Object.entries(scores).map(([h, v]) => [h, v ?? 0]));
 
   return {
     date: `${dayAbbr} ${monthDay}`,
@@ -272,7 +297,7 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
       mid: { label: waveLabel(midM), m: formatMeters(midM), h: Math.round(midM * 68) },
       outer: { label: waveLabel(outerM), m: formatMeters(outerM), h: Math.round(outerM * 68) },
     },
-    scores,
+    scores: cleanScores,
     detail: {
       dir: degToCompass(headlineWave.direction),
       score: `${avg}/100`,
@@ -352,17 +377,18 @@ async function main() {
       nowHour,
     }));
   }
+  const realDays = days.filter((d) => d !== null); // buildDay returns null for days with no real marine data at all
 
   const output = {
     generatedAt: new Date().toISOString(),
     tideFetchedAt,
     _tideCache: Object.fromEntries(tideByDay),
-    forecast: days,
+    forecast: realDays,
   };
 
   await mkdir(new URL('../data/', import.meta.url), { recursive: true });
   await writeFile(OUT_PATH, JSON.stringify(output, null, 2));
-  console.log(`Wrote ${days.length} days to data/forecast.json (tide ${tideFreshlyFetched ? 'freshly fetched' : 'from cache'})`);
+  console.log(`Wrote ${realDays.length} days to data/forecast.json (tide ${tideFreshlyFetched ? 'freshly fetched' : 'from cache'})`);
 }
 
 main().catch((err) => {
