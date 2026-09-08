@@ -16,11 +16,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Fetch forecast data
         env:
-          OPENWEATHERMAP_API_KEY: ${{ secrets.OPENWEATHERMAP_API_KEY }}
           WORLDTIDES_API_KEY: ${{ secrets.WORLDTIDES_API_KEY }}
         run: node scripts/fetch-forecast.mjs
 

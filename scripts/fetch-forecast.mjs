@@ -2,8 +2,10 @@
 // Pulls real swell/wind/tide/rain data and writes data/forecast.json.
 // Run on a schedule by .github/workflows/update-forecast.yml — see the plan
 // this implements for the full source list and reasoning:
-//   Open-Meteo Marine  -> swell height/period/direction (free, no key)
-//   OpenWeatherMap      -> wind, rain, air temp, sunrise/sunset (key required)
+//   Open-Meteo Marine   -> swell height/period/direction (free, no key)
+//   Open-Meteo Weather  -> wind, rain, air temp (free, no key, full 7 days —
+//                          switched from OpenWeatherMap, whose free tier
+//                          only covers ~5 days and left the last 2 days blank)
 //   WorldTides          -> high/low tide extremes (key required, cached ~daily
 //                          since tide extremes don't change within a day)
 
@@ -18,7 +20,6 @@ const FORECAST_DAYS = 7;
 
 const OUT_PATH = new URL('../data/forecast.json', import.meta.url);
 
-const OPENWEATHERMAP_API_KEY = process.env.OPENWEATHERMAP_API_KEY;
 const WORLDTIDES_API_KEY = process.env.WORLDTIDES_API_KEY;
 
 async function fetchJSON(url) {
@@ -69,28 +70,26 @@ async function fetchMarine() {
   return byDay;
 }
 
-async function fetchWeather(loc) {
-  if (!OPENWEATHERMAP_API_KEY) throw new Error('Missing OPENWEATHERMAP_API_KEY');
-  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${loc.lat}&lon=${loc.lon}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`;
+async function fetchOpenMeteoWeather(loc) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,precipitation_probability,precipitation&timezone=Africa%2FLagos&forecast_days=${FORECAST_DAYS}`;
   const data = await fetchJSON(url);
-  const offset = data.city.timezone;
-  // Map: 'YYYY-MM-DD' -> array of {hour, temp, windKmh, pop, rainMm}
+  // Local-time-labeled hourly array (same convention as the marine endpoint)
+  // Map: 'YYYY-MM-DD' -> array of {hour, temp, windKmh, windDeg, pop, rainMm}
   const byDay = new Map();
-  for (const entry of data.list) {
-    const local = new Date((entry.dt + offset) * 1000);
-    const date = ymd(local);
-    const hour = local.getUTCHours();
+  data.hourly.time.forEach((iso, i) => {
+    const [date, time] = iso.split('T');
+    const hour = Number(time.slice(0, 2));
     if (!byDay.has(date)) byDay.set(date, []);
     byDay.get(date).push({
       hour,
-      temp: entry.main.temp,
-      windKmh: entry.wind.speed * 3.6,
-      windDeg: entry.wind.deg,
-      pop: entry.pop ?? 0,
-      rainMm: entry.rain?.['3h'] ?? 0,
+      temp: data.hourly.temperature_2m[i],
+      windKmh: data.hourly.wind_speed_10m[i],
+      windDeg: data.hourly.wind_direction_10m[i],
+      pop: data.hourly.precipitation_probability[i] ?? 0, // 0-100
+      rainMm: data.hourly.precipitation[i] ?? 0,
     });
-  }
-  return { byDay, sunrise: localDate(data.city.sunrise), sunset: localDate(data.city.sunset) };
+  });
+  return byDay;
 }
 
 async function fetchTideExtremes() {
@@ -157,13 +156,13 @@ function nearestBy(entries, hour, key) {
 
 function classifyRain(entry) {
   if (!entry) return 'Dry';
-  if (entry.rainMm >= 2 || entry.pop >= 0.6) return 'Heavy';
-  if (entry.rainMm > 0 || entry.pop >= 0.2) return 'Light';
+  if (entry.rainMm >= 2 || entry.pop >= 60) return 'Heavy';
+  if (entry.rainMm > 0 || entry.pop >= 20) return 'Light';
   return 'Dry';
 }
 
 /* ============================= assemble ============================= */
-function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeather, isLast }) {
+function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeather, isLast, nowHour }) {
   const dateStr = ymd(dateObj);
   const dayAbbr = fmtDate(dateObj, { weekday: 'short' });
   const monthDay = fmtDate(dateObj, { day: 'numeric', month: 'short' });
@@ -191,8 +190,14 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
     scores[hour] = wave ? computeHourScore(wave.period, wave.height, wind?.windKmh ?? 15) : 0;
   }
 
-  const tideStart = best ? best.decHour - 1.5 : 0;
-  const tideEnd = best ? best.decHour + 0.5 : 0;
+  // No High tide left to recommend (common for "today" once its tide has
+  // already passed — WorldTides only returns future extremes) doesn't mean
+  // "nothing is surfable" — fall back to whatever scored hours remain today
+  // instead of forcing avg to 0 and misreporting a hard SKIP.
+  const fallbackStart = isLast === 'today' ? Math.max(SCORE_HOURS[0], Math.ceil(nowHour)) : SCORE_HOURS[0];
+  const fallbackEnd = SCORE_HOURS[SCORE_HOURS.length - 1] + 1;
+  const tideStart = best ? best.decHour - 1.5 : fallbackStart;
+  const tideEnd = best ? best.decHour + 0.5 : fallbackEnd;
   const avg = Math.round(computeWindowScore(scores, tideStart, tideEnd));
   const call = deriveCall(avg);
 
@@ -223,7 +228,7 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
     },
     tide: best
       ? { ht: hhmm(best.decHour), window: `${hhmm(tideStart)}–${hhmm(tideEnd)}`, start: Math.round(tideStart * 100) / 100, end: Math.round(tideEnd * 100) / 100 }
-      : { ht: '—', window: 'No tide data', start: 0, end: 0 },
+      : { ht: '—', window: fallbackStart >= fallbackEnd ? 'No more session today' : 'No tide-timed window — general conditions shown', start: Math.round(tideStart * 100) / 100, end: Math.round(tideEnd * 100) / 100 },
     wave: outerM < 0.15 ? null : {
       near: { label: waveLabel(nearM), m: formatMeters(nearM), h: Math.round(nearM * 68) },
       mid: { label: waveLabel(midM), m: formatMeters(midM), h: Math.round(midM * 68) },
@@ -260,10 +265,10 @@ function hoursSince(iso) {
 async function main() {
   const previous = await loadPrevious();
 
-  const [marineByDay, beach, home] = await Promise.all([
+  const [marineByDay, beachByDay, homeByDay] = await Promise.all([
     fetchMarine(),
-    fetchWeather(TARKWA_BAY),
-    fetchWeather(IKOYI),
+    fetchOpenMeteoWeather(TARKWA_BAY),
+    fetchOpenMeteoWeather(IKOYI),
   ]);
 
   let tideByDay = null;
@@ -293,6 +298,7 @@ async function main() {
   }
 
   const todayLagos = localDate(Math.floor(Date.now() / 1000));
+  const nowHour = decimalHour(todayLagos);
   const days = [];
   for (let i = 0; i < FORECAST_DAYS; i++) {
     const dateObj = new Date(todayLagos);
@@ -302,9 +308,10 @@ async function main() {
       dateObj,
       marineHours: marineByDay.get(dateStr),
       tideExtremes: tideByDay.get(dateStr),
-      beachWeather: beach.byDay.get(dateStr),
-      homeWeather: home.byDay.get(dateStr),
+      beachWeather: beachByDay.get(dateStr),
+      homeWeather: homeByDay.get(dateStr),
       isLast: i === 0 ? 'today' : i === 1 ? 'tomorrow' : null,
+      nowHour,
     }));
   }
 
