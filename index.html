@@ -312,19 +312,18 @@ const FALLBACK_DAYS = [
   }
 ];
 
-// Real illustrations — 6 are hand-authored vector SVGs (fetched and inlined
-// so they inherit CSS opacity transitions, per the brief); "too_big" and
-// "too_small" have no SVG yet so they fall back to compressed WebP raster
-// (see assets/conditions/). One illustration per real category the pipeline
-// can actually produce — "Go to Lighthouse instead" was dropped since it'd
-// need a second location's data we don't fetch.
+// Real illustrations — all 8 are the textured riso/screen-print raster art
+// (compressed to WebP, ~85-340KB each; see assets/conditions/raster/ for the
+// uncompressed originals and PROMPTS.md for how they were generated). One
+// per real category the pipeline can actually produce — "Go to Lighthouse
+// instead" was dropped since it'd need a second location's data we don't fetch.
 const ILLUS_SOURCES = {
-  go_big:    { type: 'svg', src: 'assets/conditions/go-now-big-swell.svg' },
-  go_clean:  { type: 'svg', src: 'assets/conditions/go-now-dawn-patrol.svg' },
-  maybe:     { type: 'svg', src: 'assets/conditions/worth-planning-small-rideable.svg' },
-  choppy:    { type: 'svg', src: 'assets/conditions/marginal-wind-chop.svg' },
-  flat:      { type: 'svg', src: 'assets/conditions/skip-flat.svg' },
-  stormy:    { type: 'svg', src: 'assets/conditions/skip-stormy.svg' },
+  go_big:    { type: 'img', src: 'assets/conditions/go-now-big-swell.webp' },
+  go_clean:  { type: 'img', src: 'assets/conditions/go-now-dawn-patrol.webp' },
+  maybe:     { type: 'img', src: 'assets/conditions/worth-planning-small-rideable.webp' },
+  choppy:    { type: 'img', src: 'assets/conditions/marginal-wind-chop.webp' },
+  flat:      { type: 'img', src: 'assets/conditions/skip-flat.webp' },
+  stormy:    { type: 'img', src: 'assets/conditions/skip-stormy.webp' },
   too_big:   { type: 'img', src: 'assets/conditions/too-big-oversized-swell.webp' },
   too_small: { type: 'img', src: 'assets/conditions/too-small.webp' },
 };
