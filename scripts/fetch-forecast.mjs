@@ -16,7 +16,7 @@ const IKOYI = { lat: 6.4474, lon: 3.4334 };
 const LAGOS_OFFSET_SECONDS = 3600; // WAT, UTC+1, no DST
 const SCORE_HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 const TIDE_CACHE_HOURS = 20; // re-fetch tide extremes at most once per ~day
-const FORECAST_DAYS = 7;
+const FORECAST_DAYS = 14; // temporary — 2-week category calibration run
 
 const OUT_PATH = new URL('../data/forecast.json', import.meta.url);
 
@@ -115,11 +115,48 @@ function computeHourScore(period, height, windKmh) {
   return Math.round(Math.max(0, Math.min(100, periodScore + heightScore - windPenalty + 30)));
 }
 
+const TOO_BIG_M = 1.6;   // outer/headline height above this = unrideable at this small bay, regardless of score
+const TOO_SMALL_M = 0.35; // below this there's no wave to speak of, regardless of score
+const MORNING_HOURS = [7, 8, 9, 10, 11];
+const AFTERNOON_HOURS = [14, 15, 16, 17, 18];
+
+// score-only thresholds; height/wind/time-of-day overrides are applied by
+// the caller (see buildDay) since they need context this function doesn't have
 function deriveCall(score) {
   if (score >= 60) return 'GO NOW';
   if (score >= 45) return 'WORTH PLANNING';
   if (score >= 30) return 'MARGINAL';
   return 'SKIP';
+}
+
+function avgOf(scores, hours) {
+  const vals = hours.filter((h) => h in scores).map((h) => scores[h]);
+  if (vals.length === 0) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+// Full 7-category classification: starts from the score-based call, then
+// applies overrides that the plain avg can't express on its own — a big
+// clean swell and a big dangerous swell can score the same avg, but only
+// one is "great," the other is "too big to paddle out here."
+// `avg` is the already-computed tide-window score (see computeWindowScore).
+function classifyDay({ avg, scores, outerHeightM, windKmh, rain }) {
+  if (outerHeightM > TOO_BIG_M) return 'TOO BIG';
+  if (outerHeightM < TOO_SMALL_M) return 'TOO SMALL';
+
+  const morningAvg = avgOf(scores, MORNING_HOURS);
+  const afternoonAvg = avgOf(scores, AFTERNOON_HOURS);
+  if (morningAvg !== null && afternoonAvg !== null && morningAvg >= 45 && morningAvg - afternoonAvg >= 15 && afternoonAvg < 35) {
+    return 'DAWN PATROL';
+  }
+
+  const call = deriveCall(avg);
+  if (call === 'SKIP') {
+    // two skip "reasons," same grade — distinguishes the two Skip illustrations
+    const stormy = windKmh >= 25 || rain === 'Heavy';
+    return stormy ? 'SKIP: STORMY' : 'SKIP: FLAT';
+  }
+  return call;
 }
 
 function computeWindowScore(scores, start, end) {
@@ -199,7 +236,6 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
   const tideStart = best ? best.decHour - 1.5 : fallbackStart;
   const tideEnd = best ? best.decHour + 0.5 : fallbackEnd;
   const avg = Math.round(computeWindowScore(scores, tideStart, tideEnd));
-  const call = deriveCall(avg);
 
   const headlineHour = best ? Math.round(best.decHour) : 12;
   const headlineWave = marineHours?.get(Math.min(23, Math.max(0, headlineHour))) ?? { height: 0, period: 0, direction: 0 };
@@ -212,6 +248,8 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
 
   const middayBeach = nearestBy(beachWeather, 12, 'hour');
   const middayHome = nearestBy(homeWeather, 12, 'hour');
+
+  const call = classifyDay({ avg, scores, outerHeightM: outerM, windKmh, rain: classifyRain(middayBeach) });
 
   return {
     date: `${dayAbbr} ${monthDay}`,
