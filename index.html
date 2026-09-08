@@ -26,6 +26,8 @@ html, body {
 }
 .header-spot { font-size: 13px; font-weight: 500; color: #999; }
 .header-date { font-size: 13px; color: #bbb; }
+.header-updated { font-size: 10px; color: #ccc; display: block; text-align: right; margin-top: 1px; }
+.header-updated.stale { color: #b84400; }
 
 .illus-zone {
   flex: 1; min-height: 0;
@@ -190,7 +192,10 @@ html, body {
 <div class="screen">
   <div class="header">
     <span class="header-spot">Takwa Bay</span>
-    <span class="header-date" id="hdr-date"></span>
+    <span>
+      <span class="header-date" id="hdr-date"></span>
+      <span class="header-updated" id="header-updated"></span>
+    </span>
   </div>
   <div class="illus-zone" id="illus-zone">
     <div class="illus-art" id="illus-art"></div>
@@ -216,11 +221,11 @@ html, body {
 </div>
 
 <script>
-// ── TODAY = Tue 9 Sept 2026, forecast runs 7 days forward ──
-// Live data: 1.8m 13s south swell, SW cross-shore wind ~15mph → too big/cross-shore for Takwa today
-// Rest of week estimated from semi-diurnal tide progression + typical late-wet-season Lagos pattern
-
-const DAYS = [
+// FALLBACK_DAYS is only used if data/forecast.json (produced by
+// scripts/fetch-forecast.mjs on a schedule) is unavailable — see
+// loadForecast() below. Real days are generated from real numbers via
+// describeDay(); this hand-written set is a static safety net only.
+const FALLBACK_DAYS = [
   {
     day:'Tue', date:'Tue 9 Sep',
     call:'SKIP',
@@ -307,17 +312,131 @@ const DAYS = [
   }
 ];
 
-// Real illustrations — 5 are hand-authored vector SVGs (fetched and inlined
-// so they inherit CSS opacity transitions, per the brief); "too_big" has no
-// SVG yet so it falls back to a compressed WebP raster (see assets/conditions/).
+// Real illustrations — 6 are hand-authored vector SVGs (fetched and inlined
+// so they inherit CSS opacity transitions, per the brief); "too_big" and
+// "too_small" have no SVG yet so they fall back to compressed WebP raster
+// (see assets/conditions/). One illustration per real category the pipeline
+// can actually produce — "Go to Lighthouse instead" was dropped since it'd
+// need a second location's data we don't fetch.
 const ILLUS_SOURCES = {
-  go_big:   { type: 'svg', src: 'assets/conditions/go-now-big-swell.svg' },
-  go_clean: { type: 'svg', src: 'assets/conditions/go-now-dawn-patrol.svg' },
-  maybe:    { type: 'svg', src: 'assets/conditions/worth-planning-small-rideable.svg' },
-  choppy:   { type: 'svg', src: 'assets/conditions/marginal-wind-chop.svg' },
-  flat:     { type: 'svg', src: 'assets/conditions/skip-flat.svg' },
-  too_big:  { type: 'img', src: 'assets/conditions/too-big-oversized-swell.webp' },
+  go_big:    { type: 'svg', src: 'assets/conditions/go-now-big-swell.svg' },
+  go_clean:  { type: 'svg', src: 'assets/conditions/go-now-dawn-patrol.svg' },
+  maybe:     { type: 'svg', src: 'assets/conditions/worth-planning-small-rideable.svg' },
+  choppy:    { type: 'svg', src: 'assets/conditions/marginal-wind-chop.svg' },
+  flat:      { type: 'svg', src: 'assets/conditions/skip-flat.svg' },
+  stormy:    { type: 'svg', src: 'assets/conditions/skip-stormy.svg' },
+  too_big:   { type: 'img', src: 'assets/conditions/too-big-oversized-swell.webp' },
+  too_small: { type: 'img', src: 'assets/conditions/too-small.webp' },
 };
+
+// Maps the pipeline's `call` values (scripts/fetch-forecast.mjs classifyDay)
+// to the illustration keys above.
+const CALL_TO_ILLUS = {
+  'GO NOW': 'go_big',
+  'DAWN PATROL': 'go_clean',
+  'WORTH PLANNING': 'maybe',
+  'MARGINAL': 'choppy',
+  'TOO BIG': 'too_big',
+  'TOO SMALL': 'too_small',
+  'SKIP: FLAT': 'flat',
+  'SKIP: STORMY': 'stormy',
+};
+
+// Verdict/sub-copy/panel-headline are generated from real numbers instead of
+// hand-written per day — the pipeline only produces structured data, not prose.
+function describeDay(raw) {
+  const { call, swell, tide } = raw;
+  switch (call) {
+    case 'GO NOW':
+      return {
+        verdict: 'Go surf.',
+        sub: `<span class="go">${raw.avg >= 65 ? 'Best window this week.' : 'Good window today.'}</span> ${swell.height}m swell at ${swell.period}s, ${swell.wind}km/h wind. Be at Takwa by ${tide.ht}.`,
+        detailHead: 'Clean, organised swell.',
+      };
+    case 'DAWN PATROL':
+      return {
+        verdict: 'Dawn patrol only.',
+        sub: `Good early — <span class="warn">drops off fast after that.</span> ${swell.height}m swell, best right around the morning tide before the wind fills in.`,
+        detailHead: 'Good early, fades fast.',
+      };
+    case 'WORTH PLANNING':
+      return {
+        verdict: 'Maybe.',
+        sub: `${swell.height}m swell, ${swell.period}s period. <span class="go">Tide window ${tide.window}</span> is your best shot today.`,
+        detailHead: 'Worth checking conditions.',
+      };
+    case 'MARGINAL':
+      return {
+        verdict: 'Probably not.',
+        sub: `<span class="warn">Wind chop taking over</span> — ${swell.wind}km/h wind on a ${swell.height}m swell. Only worth it if you don't mind rough water.`,
+        detailHead: 'Choppy, not clean.',
+      };
+    case 'TOO BIG':
+      return {
+        verdict: 'Too big today.',
+        sub: `${swell.height}m swell is <span class="warn">too large for Takwa</span>. Beautiful to watch, not to paddle out in here.`,
+        detailHead: 'Big swell, sit this one out.',
+      };
+    case 'TOO SMALL':
+      return {
+        verdict: 'Nothing to ride.',
+        sub: `Basically flat at ${swell.height}m — <span class="warn">not enough wave to work with</span> today.`,
+        detailHead: 'Too small to ride.',
+      };
+    case 'SKIP: FLAT':
+      return {
+        verdict: 'Stay home.',
+        sub: `<span class="warn">Flat and quiet.</span> Nothing worth paddling out for today.`,
+        detailHead: 'Not worth it.',
+      };
+    case 'SKIP: STORMY':
+    default:
+      return {
+        verdict: 'Stay home.',
+        sub: `<span class="warn">Heavy rain and wind chop.</span> Rough out there — save it for a cleaner day.`,
+        detailHead: 'Stormy, skip it.',
+      };
+  }
+}
+
+// Converts one scripts/fetch-forecast.mjs output day into the shape this
+// page renders (adds the generated copy + illustration key on top of the
+// real structured fields, which pass through unchanged).
+function adaptDay(raw) {
+  const { verdict, sub, detailHead } = describeDay(raw);
+  return {
+    day: raw.day,
+    date: raw.date,
+    call: raw.call,
+    verdict,
+    sub,
+    detailHead,
+    swell: raw.swell,
+    tide: raw.tide,
+    wave: raw.wave,
+    scores: raw.scores,
+    detail: raw.detail,
+    illus: CALL_TO_ILLUS[raw.call] || 'flat',
+  };
+}
+
+let DAYS = FALLBACK_DAYS;
+let forecastGeneratedAt = null;
+
+async function loadForecast() {
+  try {
+    const res = await fetch('./data/forecast.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!Array.isArray(data.forecast) || data.forecast.length === 0) throw new Error('empty forecast.json');
+    DAYS = data.forecast.map(adaptDay);
+    forecastGeneratedAt = data.generatedAt || null;
+  } catch (err) {
+    console.warn('Using bundled fallback days — data/forecast.json unavailable:', err.message);
+    DAYS = FALLBACK_DAYS;
+    forecastGeneratedAt = null;
+  }
+}
 
 const illusCache = {};
 
@@ -360,8 +479,11 @@ let currentIdx = 0;
 let detailOpen = false;
 
 function dotClass(call) {
-  return call === 'GO NOW' ? 'dot-go' : call === 'WORTH PLANNING' ? 'dot-plan' : 'dot-skip';
+  if (call === 'GO NOW' || call === 'DAWN PATROL') return 'dot-go';
+  if (call === 'WORTH PLANNING') return 'dot-plan';
+  return 'dot-skip'; // MARGINAL, TOO BIG, TOO SMALL, SKIP: FLAT, SKIP: STORMY
 }
+const MUTED_CALLS = new Set(['MARGINAL', 'TOO BIG', 'TOO SMALL', 'SKIP: FLAT', 'SKIP: STORMY']);
 function stripColor(h, sc, tS, tE) {
   if (tS && h >= Math.floor(tS) && h < Math.ceil(tE)) return '#1a6b3a';
   if (sc >= 58) return '#a8d5a2';
@@ -381,7 +503,7 @@ function renderHeroText(d) {
   document.getElementById('hdr-date').textContent = d.date;
   const vEl = document.getElementById('hero-verdict');
   vEl.textContent = d.verdict;
-  vEl.className = 'hero-verdict' + (d.call === 'SKIP' || d.call === 'MARGINAL' ? ' skip' : '');
+  vEl.className = 'hero-verdict' + (MUTED_CALLS.has(d.call) ? ' skip' : '');
   document.getElementById('hero-sub').innerHTML = d.sub;
 }
 
@@ -432,7 +554,7 @@ function renderDetail(d) {
       <div class="stat-row"><span class="sk">Swell height</span><span class="sv ${sizeClass}">${d.swell.height}m</span></div>
       <div class="stat-row"><span class="sk">Period</span><span class="sv">${d.swell.period}s — ${d.swell.type}</span></div>
       <div class="stat-row"><span class="sk">Wind</span><span class="sv ${windClass}">${d.swell.wind} km/h — ${d.swell.condition}</span></div>
-      <div class="stat-row"><span class="sk">Water temp</span><span class="sv">28°C — board shorts</span></div>
+      <div class="stat-row"><span class="sk">Water temp</span><span class="sv">${d.detail?.temp || '—'} — board shorts</span></div>
       <div class="stat-row"><span class="sk">High tide</span><span class="sv">${d.tide?.ht || 'Outside daylight'}</span></div>
     </div>`;
 }
@@ -477,11 +599,25 @@ document.getElementById('detail-panel').addEventListener('touchend', e => {
   if (e.changedTouches[0].clientY - touchY > 60) closeDetail();
 }, {passive:true});
 
+function renderUpdatedAt() {
+  const el = document.getElementById('header-updated');
+  if (!forecastGeneratedAt) {
+    el.textContent = 'Preview data';
+    return;
+  }
+  const hoursAgo = (Date.now() - new Date(forecastGeneratedAt).getTime()) / 36e5;
+  el.textContent = hoursAgo < 1 ? 'Updated just now' : `Updated ${Math.floor(hoursAgo)}h ago`;
+  el.classList.toggle('stale', hoursAgo > 8); // 2x the pipeline's 4h refresh cadence
+}
+
 async function init() {
-  document.getElementById('illus-art').innerHTML = `<div class="illus-loading">${DAYS[0].day}</div>`;
+  document.getElementById('illus-art').innerHTML = `<div class="illus-loading">Loading</div>`;
+  await loadForecast();
+  currentIdx = 0;
   renderWeek();
   renderHeroText(DAYS[0]);
   renderDetail(DAYS[0]);
+  renderUpdatedAt();
   await preloadIllustrations();
   renderIllus(DAYS[0].illus);
 }
