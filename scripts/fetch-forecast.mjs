@@ -16,7 +16,7 @@ const IKOYI = { lat: 6.4474, lon: 3.4334 };
 const LAGOS_OFFSET_SECONDS = 3600; // WAT, UTC+1, no DST
 const SCORE_HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 const TIDE_CACHE_HOURS = 20; // re-fetch tide extremes at most once per ~day
-const FORECAST_DAYS = 14; // temporary — widened for a one-off 2-week category review, see git history
+const FORECAST_DAYS = 7;
 
 const OUT_PATH = new URL('../data/forecast.json', import.meta.url);
 
