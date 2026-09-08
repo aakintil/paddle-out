@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Tarkwa Bay Surf Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  /* ---------- shadcn/ui-style design tokens (zinc theme) ---------- */
+  :root {
+    --background: #ffffff;
+    --foreground: #09090b;
+    --card: #ffffff;
+    --card-foreground: #09090b;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --subtle-foreground: #a1a1aa;
+    --border: #e4e4e7;
+    --radius: 0.625rem;
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+
+    --go: #16a34a;
+    --go-foreground: #ffffff;
+    --plan-bg: #f0fdf4;
+    --plan-foreground: #15803d;
+    --plan-border: #bbf7d0;
+    --marginal-bg: var(--muted);
+    --marginal-foreground: var(--muted-foreground);
+    --marginal-border: var(--border);
+
+    --rain-dry: #86efac;
+    --rain-light: #f59e0b;
+    --rain-heavy: #ef4444;
+  }
+
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(to bottom, #0a2a4a, #1a6b8a);
+    transition: background 0.5s linear;
+  }
+
+  #ocean-canvas {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; display: block;
+  }
+
+  /* ---------- floating overlays ---------- */
+  .overlay { position: fixed; z-index: 10; pointer-events: none; }
+
+  .overlay-topleft { top: max(18px, env(safe-area-inset-top)); left: 18px; }
+  .overlay-topleft .spot-name { font-size: 13px; font-weight: 600; color: #fff; letter-spacing: 0.2px; }
+  .overlay-topleft .spot-sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .overlay-topleft .updated-at { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+  .overlay-topleft .updated-at.stale { color: #f0b429; }
+
+  .overlay-topright { top: max(18px, env(safe-area-inset-top)); right: 18px; transition: opacity 0.3s ease; }
+  .verdict-pill {
+    font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: var(--radius-lg);
+    white-space: nowrap; transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+  .verdict-pill.go { background: var(--go); color: var(--go-foreground); }
+  .verdict-pill.plan { background: transparent; color: #86efac; border: 1.5px solid rgba(255,255,255,0.5); }
+  .verdict-pill.marginal { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.75); border: 1.5px solid rgba(255,255,255,0.25); }
+  .verdict-pill.skip { background: rgba(0,0,0,0.25); color: rgba(255,255,255,0.5); border: 1.5px solid rgba(255,255,255,0.15); }
+
+  .overlay-center {
+    top: 40%; left: 0; width: 100%; text-align: center; transition: opacity 0.3s ease;
+  }
+  .wave-label { font-size: 16px; font-weight: 500; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.25); }
+
+  .fade-out { opacity: 0; }
+
+  /* ---------- bottom sheet ---------- */
+  .bottom-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; margin: 0 auto;
+    max-width: 480px; width: 100%; height: 82vh;
+    background: var(--card); border: 1px solid var(--border); border-bottom: none;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: 0 -8px 30px -6px rgba(0,0,0,0.12);
+    z-index: 20; display: flex; flex-direction: column; overflow: hidden;
+    transform: translateY(calc(100% - 226px));
+    transition: transform 0.3s ease;
+  }
+  .bottom-sheet.dragging { transition: none; }
+  .bottom-sheet.expanded { transform: translateY(0); }
+
+  .sheet-handle-wrap {
+    flex-shrink: 0; display: flex; justify-content: center; align-items: center;
+    padding: 10px 0 6px; cursor: grab; touch-action: none;
+  }
+  .sheet-handle { width: 36px; height: 4px; border-radius: var(--radius-sm); background: #d4d4d8; }
+
+  .chips-row {
+    flex-shrink: 0; display: flex; gap: 6px; overflow-x: auto;
+    padding: 2px 16px 12px; scrollbar-width: none;
+  }
+  .chips-row::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0; font-size: 12px; font-weight: 500; padding: 6px 12px;
+    border-radius: var(--radius-lg); border: 1px solid transparent; background: transparent; color: var(--subtle-foreground);
+    font-family: inherit; cursor: pointer; transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  .chip.active.go { background: var(--go); color: var(--go-foreground); font-weight: 600; }
+  .chip.active.plan { background: var(--plan-bg); color: var(--plan-foreground); border-color: var(--plan-border); font-weight: 600; }
+  .chip.active.marginal { background: var(--marginal-bg); color: var(--marginal-foreground); border-color: var(--marginal-border); font-weight: 600; }
+  .chip.active.skip { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); font-weight: 600; }
+
+  .card-content { flex: 1 1 auto; overflow-y: auto; padding: 0 20px 28px; -webkit-overflow-scrolling: touch; }
+
+  /* peek view */
+  .peek-view { transition: opacity 0.2s ease; }
+  .peek-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .peek-title { font-size: 15px; font-weight: 600; color: var(--foreground); }
+  .peek-title .peek-label { color: var(--muted-foreground); font-weight: 400; }
+  .badge {
+    display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--radius-lg);
+    font-size: 12px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+  }
+  .badge.go { background: var(--go); color: var(--go-foreground); }
+  .badge.plan { background: var(--plan-bg); color: var(--plan-foreground); border-color: var(--plan-border); }
+  .badge.marginal { background: var(--marginal-bg); color: var(--marginal-foreground); border-color: var(--marginal-border); }
+  .badge.skip { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); }
+
+  .peek-swell { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #3f3f46; margin-top: 10px; }
+  .peek-swell .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--go); flex-shrink: 0; }
+
+  .peek-window { font-size: 13px; color: var(--foreground); margin-top: 8px; }
+  .peek-window .ht { color: var(--go); font-weight: 600; }
+  .peek-window b { font-weight: 600; }
+
+  .peek-stats { font-size: 12px; color: var(--muted-foreground); margin-top: 6px; line-height: 18px; }
+
+  .peek-rain { display: flex; gap: 16px; margin-top: 10px; }
+  .rain-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #52525b; }
+  .rain-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .rain-dot.dry { background: var(--rain-dry); }
+  .rain-dot.light { background: var(--rain-light); }
+  .rain-dot.heavy { background: var(--rain-heavy); }
+  .rain-item.heavy { color: #dc2626; font-weight: 600; }
+
+  /* expanded view */
+  .expanded-view { margin-top: 24px; }
+  .bottom-sheet:not(.expanded) .expanded-view { display: none; }
+
+  .section-label { font-size: 13px; font-weight: 600; color: var(--foreground); margin-bottom: 12px; }
+
+  .wave-block { margin-bottom: 28px; }
+  .wave-visual { display: flex; align-items: flex-end; gap: 18px; height: 120px; padding: 0 6px; }
+  .wave-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+  .wave-size-label { font-size: 11px; font-weight: 600; color: #3f3f46; margin-bottom: 6px; }
+  .wave-bar { width: 100%; max-width: 48px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: linear-gradient(to top, #0e7490, #22d3ee); }
+  .wave-loc-label { font-size: 10px; color: var(--muted-foreground); margin-top: 8px; }
+  .wave-dist-label { font-size: 10px; color: var(--subtle-foreground); margin-top: 2px; }
+  .wave-flat { font-size: 13px; color: var(--muted-foreground); text-align: center; padding: 30px 0; }
+
+  .chart-block { margin-bottom: 28px; }
+  .strip { display: flex; height: 10px; border-radius: var(--radius-sm); overflow: hidden; }
+  .strip-seg { flex: 1; }
+  .strip-seg.tide { background: var(--go); }
+  .strip-seg.good { background: var(--plan-border); }
+  .strip-seg.marginal { background: var(--border); }
+  .strip-hours { display: flex; justify-content: space-between; font-size: 9px; color: var(--subtle-foreground); margin-top: 6px; }
+  .strip-footer { font-size: 11px; color: var(--muted-foreground); margin-top: 10px; }
+  .strip-footer b { color: var(--plan-foreground); font-weight: 600; }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; row-gap: 18px; column-gap: 12px; }
+  .detail-item .detail-label { font-size: 11px; color: var(--muted-foreground); }
+  .detail-item .detail-value { font-size: 15px; font-weight: 600; color: var(--foreground); margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<canvas id="ocean-canvas"></canvas>
+
+<div class="overlay overlay-topleft">
+  <div class="spot-name">Tarkwa Bay</div>
+  <div class="spot-sub" id="spot-sub">Lagos · 23 Aug</div>
+  <div class="updated-at" id="updated-at"></div>
+</div>
+
+<div class="overlay overlay-topright" id="verdict-wrap">
+  <div class="verdict-pill" id="verdict-pill">Go Surf</div>
+</div>
+
+<div class="overlay overlay-center" id="wavelabel-wrap">
+  <div class="wave-label" id="wave-label">Chest high at the break</div>
+</div>
+
+<div class="bottom-sheet" id="sheet">
+  <div class="sheet-handle-wrap" id="sheet-handle-wrap">
+    <div class="sheet-handle"></div>
+  </div>
+
+  <div class="chips-row" id="chips-row"></div>
+
+  <div class="card-content">
+    <div class="peek-view" id="peek-view"></div>
+    <div class="expanded-view" id="expanded-view"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============================= DATA ============================= */
+// SOURCES (pulled live via web search on the day this was written — this is
+// a one-time manual pull, NOT a live API integration; re-fetch to refresh):
+//   Tide (ht/window, all 7 days, real):
+//     tide-forecast.com/locations/Lagos-Bar-Nigeria/tides/latest
+//   Swell + wind (height/period/direction/wind, Sun–Thu real, Fri partial):
+//     surf-forecast.com/breaks/Tarqua-Bay/forecasts/latest/six_day
+//   (We'd been calling this "Takwa Bay" — the real spot is Tarkwa Bay,
+//   fixed in the title/overlay below.)
+//   NOT sourced, still placeholder: water temp, crowd level, rain (beach/home).
+//   Sat 5 Sep swell/wind: the 6-day model had no data that far out — estimated.
+//
+// `scores` are DERIVED, not sourced directly — the sites above give swell
+// height/period/wind, not a 0–100 quality number, so each real reading is
+// run through: score = clamp((period-6)/10*40) + clamp(height/1.5*35)
+// - clamp(wind/30*35) + 30. Longer period and more height raise it, wind
+// tears it down. Where the source only gives one reading for a day, the
+// score is held flat across the day rather than inventing intraday swings.
+//
+// GRADING RUBRIC (`call`) — two independent gates, take the lower of the two:
+//
+// 1. Wave/wind quality, by the day's avg score:
+//      avg >= 60        -> GO NOW
+//      avg 45–59         -> WORTH PLANNING
+//      avg 30–44         -> MARGINAL
+//      avg < 30 / no wave -> effectively flat ("Flat — not worth it")
+//
+// 2. Daylight feasibility of the best tide window (Lagos daylight ~06:39–18:54
+//    this week, per the tide source's own sunrise/sunset). A great score is
+//    meaningless if you can't see the water — `computeWindowScore` below only
+//    counts hours that are BOTH tide-good and inside `scores` (07:00–18:00),
+//    so a tide window sitting entirely after dark scores as 0 automatically.
+//
+// Real tides here run ~2/day, ~12h25m apart. Some days the evening high is
+// unusable (past sunset) and the morning one is the actual surf window —
+// picked per-day below based on which one actually overlaps daylight.
+//
+// This array is now only a FALLBACK — used if data/forecast.json (produced by
+// scripts/fetch-forecast.mjs on a schedule, see .github/workflows/update-forecast.yml)
+// hasn't been generated yet or fails to load. It's real data from the day it
+// was written, not a live feed, so it'll drift stale; that's fine, it only
+// exists as a safety net.
+const FALLBACK_FORECAST = [
+  {
+    date: 'Sun 30 Aug', label: 'Today', day: 'Sun',
+    call: 'GO NOW', avg: 62.4,
+    swell: { type: 'Groundswell', period: 15, height: 1.3, wind: 25, condition: 'Choppy' },
+    tide: { ht: '18:09', window: '16:39–18:39', start: 16.65, end: 18.65 },
+    wave: { near: { label: 'Waist', m: '0.5m', h: 34 }, mid: { label: 'Chest', m: '0.9m', h: 61 }, outer: { label: 'Head', m: '1.3m', h: 88 } },
+    // only one real reading today (Sun 30 PM: 1.3m/15s/25km/h SSW) — held flat
+    scores: { 7:67,8:67,9:67,10:67,11:67,12:67,13:67,14:67,15:67,16:67,17:67,18:67 },
+    detail: { dir: 'SSW', score: '62/100', temp: '28°C', crowd: 'High' },
+    rain: { beach: 'Dry', home: 'Dry' }
+  },
+  {
+    date: 'Mon 31 Aug', label: 'Tomorrow', day: 'Mon',
+    call: 'WORTH PLANNING', avg: 48.0,
+    swell: { type: 'Groundswell', period: 15, height: 1.4, wind: 15, condition: 'Clean' },
+    // source's own "best quality surf" call-out for the week: Mon 7AM,
+    // 1.4m/15s SSW, cross-offshore wind — right after this morning high tide
+    tide: { ht: '06:36', window: '05:06–07:06', start: 5.1, end: 7.1 },
+    wave: { near: { label: 'Waist', m: '0.55m', h: 37 }, mid: { label: 'Chest', m: '1.0m', h: 68 }, outer: { label: 'Head', m: '1.4m', h: 95 } },
+    scores: { 7:81,8:81,9:81,10:81,11:81,12:81,13:71,14:71,15:71,16:71,17:71,18:71 },
+    detail: { dir: 'SSW', score: '48/100', temp: '28°C', crowd: 'Low' },
+    rain: { beach: 'Dry', home: 'Light' }
+  },
+  {
+    date: 'Tue 1 Sep', label: 'Tuesday', day: 'Tue',
+    call: 'WORTH PLANNING', avg: 44.0,
+    swell: { type: 'Groundswell', period: 13, height: 0.8, wind: 15, condition: 'Clean' },
+    // evening high (19:25) is past sunset — morning high is the real window
+    tide: { ht: '07:09', window: '05:39–07:39', start: 5.65, end: 7.65 },
+    wave: { near: { label: 'Ankle', m: '0.3m', h: 20 }, mid: { label: 'Knee', m: '0.5m', h: 34 }, outer: { label: 'Waist', m: '0.8m', h: 54 } },
+    scores: { 7:59,8:59,9:59,10:59,11:59,12:59,13:52,14:52,15:52,16:52,17:52,18:52 },
+    detail: { dir: 'SW', score: '44/100', temp: '28°C', crowd: 'Low' },
+    rain: { beach: 'Dry', home: 'Dry' }
+  },
+  {
+    date: 'Wed 2 Sep', label: 'Wednesday', day: 'Wed',
+    call: 'MARGINAL', avg: 36.0,
+    swell: { type: 'Groundswell', period: 12, height: 0.9, wind: 10, condition: 'Clean' },
+    tide: { ht: '07:45', window: '06:15–08:15', start: 6.25, end: 8.25 },
+    wave: { near: { label: 'Ankle', m: '0.35m', h: 24 }, mid: { label: 'Waist', m: '0.6m', h: 41 }, outer: { label: 'Chest', m: '0.9m', h: 61 } },
+    scores: { 7:63,8:63,9:63,10:63,11:63,12:63,13:54,14:54,15:54,16:54,17:54,18:54 },
+    detail: { dir: 'S', score: '36/100', temp: '28°C', crowd: 'Low' },
+    rain: { beach: 'Light', home: 'Dry' }
+  },
+  {
+    date: 'Thu 3 Sep', label: 'Thursday', day: 'Thu',
+    call: 'WORTH PLANNING', avg: 45.0,
+    swell: { type: 'Groundswell', period: 11, height: 1.5, wind: 20, condition: 'Choppy' },
+    tide: { ht: '08:27', window: '06:57–08:57', start: 6.95, end: 8.95 },
+    wave: { near: { label: 'Waist', m: '0.55m', h: 37 }, mid: { label: 'Chest', m: '1.0m', h: 68 }, outer: { label: 'Head', m: '1.5m', h: 102 } },
+    scores: { 7:56,8:58,9:60,10:62,11:61,12:59,13:58,14:53,15:48,16:44,17:44,18:44 },
+    detail: { dir: 'SSW', score: '45/100', temp: '28°C', crowd: 'Low' },
+    rain: { beach: 'Dry', home: 'Dry' }
+  },
+  {
+    date: 'Fri 4 Sep', label: 'Friday', day: 'Fri',
+    call: 'GO NOW', avg: 58.0,
+    swell: { type: 'Groundswell', period: 10, height: 0.7, wind: 10, condition: 'Clean' },
+    // only the 7AM reading is real for Friday — the model had no data past
+    // that, so the rest of the day is held flat rather than invented
+    tide: { ht: '09:18', window: '07:48–09:48', start: 7.8, end: 9.8 },
+    wave: { near: { label: 'Ankle', m: '0.3m', h: 20 }, mid: { label: 'Knee', m: '0.5m', h: 34 }, outer: { label: 'Waist', m: '0.7m', h: 48 } },
+    scores: { 7:51,8:51,9:51,10:51,11:51,12:51,13:51,14:51,15:51,16:51,17:51,18:51 },
+    detail: { dir: 'S', score: '58/100', temp: '28°C', crowd: 'Medium' },
+    rain: { beach: 'Dry', home: 'Dry' }
+  },
+  {
+    date: 'Sat 5 Sep', label: 'Saturday', day: 'Sat',
+    call: 'WORTH PLANNING', avg: 50.0,
+    // ESTIMATED — beyond the 6-day forecast horizon, no real swell/wind
+    // source for this day. Tide is still real.
+    swell: { type: 'Groundswell', period: 9, height: 0.65, wind: 16, condition: 'Choppy' },
+    tide: { ht: '10:29', window: '08:59–10:59', start: 8.98, end: 10.98 },
+    wave: { near: { label: 'Ankle', m: '0.25m', h: 17 }, mid: { label: 'Knee', m: '0.45m', h: 31 }, outer: { label: 'Waist', m: '0.65m', h: 44 } },
+    scores: { 7:39,8:39,9:39,10:39,11:39,12:39,13:39,14:39,15:39,16:39,17:39,18:39 },
+    detail: { dir: 'SSW', score: '50/100', temp: '28°C', crowd: 'High' },
+    rain: { beach: 'Light', home: 'Dry' }
+  }
+];
+
+// A good swell at a bad hour isn't a good day. Instead of grading the day's
+// full potential and separately capping it for daylight, weigh the two
+// together: only the hours that are BOTH tide-good and in `scores` (which
+// only exists 07:00–18:00, i.e. daylight) count toward the verdict. A great
+// tide window at night now scores as if it doesn't exist, rather than
+// contradicting a hand-picked "GO NOW" label.
+function computeWindowScore(day) {
+  const hours = Object.keys(day.scores).map(Number);
+  const inWindow = hours.filter(h => h + 1 > day.tide.start && h < day.tide.end);
+  if (inWindow.length === 0) return 0; // tide window doesn't overlap any hour we have data for
+  return inWindow.reduce((sum, h) => sum + day.scores[h], 0) / inWindow.length;
+}
+
+function deriveCall(score) {
+  if (score >= 60) return 'GO NOW';
+  if (score >= 45) return 'WORTH PLANNING';
+  if (score >= 30) return 'MARGINAL';
+  return 'SKIP';
+}
+
+let FORECAST = FALLBACK_FORECAST;
+let forecastGeneratedAt = null;
+
+async function loadForecast() {
+  try {
+    const res = await fetch('./data/forecast.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!Array.isArray(data.forecast) || data.forecast.length === 0) throw new Error('empty forecast.json');
+    FORECAST = data.forecast;
+    forecastGeneratedAt = data.generatedAt || null;
+  } catch (err) {
+    console.warn('Using bundled fallback forecast — data/forecast.json unavailable:', err.message);
+    FORECAST = FALLBACK_FORECAST;
+    forecastGeneratedAt = null;
+  }
+
+  // recompute avg/call client-side too, so the fallback data (and the JSON,
+  // as a sanity check) always reflect this same rubric even if it changes
+  FORECAST.forEach(day => {
+    const windowScore = Math.round(computeWindowScore(day));
+    day.avg = windowScore;
+    day.call = deriveCall(windowScore);
+    day.detail.score = `${windowScore}/100`;
+  });
+}
+
+const PALETTES = {
+  'GO NOW': {
+    waterColor: [0.04, 0.45, 0.55],
+    skyTop:     '#0a2a4a',
+    skyBottom:  '#1a6b8a',
+    fogColor:   '#4db8cc',
+    ambientLight: '#80d4e8',
+    sunColor:   '#ffe680',
+  },
+  'WORTH PLANNING': {
+    waterColor: [0.06, 0.32, 0.42],
+    skyTop:     '#1a3344',
+    skyBottom:  '#2d6680',
+    fogColor:   '#5599aa',
+    ambientLight: '#99c4d4',
+    sunColor:   '#ffcc44',
+  },
+  'MARGINAL': {
+    waterColor: [0.12, 0.22, 0.30],
+    skyTop:     '#1a1f26',
+    skyBottom:  '#2a3540',
+    fogColor:   '#445566',
+    ambientLight: '#667788',
+    sunColor:   '#aabbcc',
+  },
+  'SKIP': {
+    waterColor: [0.14, 0.18, 0.22],
+    skyTop:     '#111518',
+    skyBottom:  '#1e2530',
+    fogColor:   '#334455',
+    ambientLight: '#556677',
+    sunColor:   '#8899aa',
+  }
+};
+
+function callClass(call) {
+  if (call === 'GO NOW') return 'go';
+  if (call === 'WORTH PLANNING') return 'plan';
+  if (call === 'MARGINAL') return 'marginal';
+  return 'skip';
+}
+function callPillLabel(call) {
+  if (call === 'GO NOW') return 'Go Surf';
+  if (call === 'WORTH PLANNING') return 'Worth Planning';
+  if (call === 'MARGINAL') return 'Marginal';
+  return 'Skip';
+}
+
+/* ============================= THREE.JS OCEAN ============================= */
+const canvas = document.getElementById('ocean-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+// Camera sits above and behind the shoreline looking down the beach — swell rolls in
+// from the horizon (far -z) and breaks near the camera (large +z), onto the sand.
+camera.position.set(0, 9, 27);
+camera.lookAt(0, -1, -4);
+
+const VERT_SHADER = `
+  uniform float uTime;
+  uniform float uWaveHeight;
+  uniform float uWaveSpeed;
+  uniform float uChoppiness;
+  varying float vHeight;
+  varying float vZ;
+  varying float vShoreT;
+  varying float vBeachT;
+
+  void main() {
+    vec3 pos = position;
+    vZ = pos.z;
+
+    // shoreT: 0 = open water, 1 = fully broken at the shore (z from -2 to 6)
+    float shoreT = clamp((pos.z + 2.0) / 8.0, 0.0, 1.0);
+    float rise = smoothstep(0.0, 0.7, shoreT);
+    float fall = smoothstep(0.7, 1.0, shoreT);
+    float shoal = mix(1.0, 2.6, rise);   // wave grows as it shoals
+    shoal = mix(shoal, 0.12, fall);      // then collapses once it breaks
+
+    // small x-dependent phase offset makes the wave front peel diagonally
+    // across the beach instead of the whole line breaking at once
+    float peelPhase = pos.x * 0.045;
+
+    // two octaves at different frequency/speed so the swell doesn't loop
+    // in an obviously mechanical, perfectly repeating way
+    float p1 = sin(pos.z * 0.5 - uTime * uWaveSpeed * 1.2 + peelPhase) * 0.72;
+    float p2 = sin(pos.z * 0.33 - uTime * uWaveSpeed * 0.82 + peelPhase * 1.6) * 0.28;
+    float primary = (p1 + p2) * uWaveHeight * shoal;
+
+    float crossSwell = sin(pos.x * 0.3 + uTime * uWaveSpeed * 0.4) * uWaveHeight * 0.22 * (1.0 - shoreT * 0.8);
+    float chop = sin(pos.x * 2.0 + uTime * 2.2) * sin(pos.z * 1.6 + uTime * 1.8) * uChoppiness * 0.22 * (1.0 - shoreT * 0.6);
+
+    float beachT = clamp((pos.z - 6.0) / 9.0, 0.0, 1.0);
+    vBeachT = beachT;
+    float wash = sin(pos.x * 1.2 + uTime * 0.8) * 0.03 * (1.0 - beachT);
+
+    float h = mix(primary + crossSwell + chop, wash, smoothstep(0.85, 1.0, shoreT));
+
+    pos.y = h;
+    vHeight = h;
+    vShoreT = shoreT;
+
+    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+const FRAG_SHADER = `
+  uniform vec3 uWaterColor;
+  uniform vec3 uFoamColor;
+  uniform float uWaveHeight;
+  uniform float uTime;
+  uniform float uOpacity;
+  varying float vHeight;
+  varying float vZ;
+  varying float vShoreT;
+  varying float vBeachT;
+
+  void main() {
+    float rise = smoothstep(0.0, 0.7, vShoreT);
+    float fall = smoothstep(0.7, 1.0, vShoreT);
+    float shoal = mix(1.0, 2.6, rise);
+    shoal = mix(shoal, 0.12, fall);
+    float localAmp = max(uWaveHeight * shoal, 0.001);
+    float normH = clamp(vHeight / localAmp, -1.0, 1.0);
+
+    // simple height-based shading stands in for lighting on the wave face
+    vec3 baseWater = mix(uWaterColor * 0.82, uWaterColor * 1.18, normH * 0.5 + 0.5);
+
+    // bigger swell -> wider, more frequent whitewater when it breaks
+    float heightNorm = clamp(uWaveHeight / 1.2, 0.0, 1.0);
+    float foamThreshold = mix(0.78, 0.3, heightNorm);
+    float bellWidth = mix(0.12, 0.28, heightNorm);
+    float shoreCenter = 0.55;
+    float shoreWeight = smoothstep(shoreCenter - bellWidth - 0.22, shoreCenter - bellWidth + 0.05, vShoreT)
+                       * (1.0 - smoothstep(shoreCenter + bellWidth - 0.05, shoreCenter + bellWidth + 0.22, vShoreT));
+
+    // slow breathing so whitewater swells and fades like real sets,
+    // instead of snapping on/off with the wave phase
+    float breathe = 0.9 + 0.1 * sin(uTime * 0.35);
+    float breakFoam = smoothstep(foamThreshold, foamThreshold + 0.35, normH) * shoreWeight * breathe;
+    float whitecap = smoothstep(uWaveHeight * 0.9, uWaveHeight * 1.5, vHeight) * 0.4;
+    float foamAmt = clamp(max(breakFoam, whitecap), 0.0, 1.0);
+    foamAmt = pow(foamAmt, 0.6);
+    vec3 waterColor = mix(baseWater, uFoamColor, foamAmt);
+
+    vec3 wetSand = vec3(0.55, 0.46, 0.33);
+    vec3 drySand = vec3(0.82, 0.72, 0.52);
+    vec3 sandColor = mix(wetSand, drySand, smoothstep(0.0, 0.55, vBeachT));
+    float washReach = mix(0.15, 0.45, heightNorm);
+    float washPulse = 0.5 + 0.5 * sin(uTime * 0.9 - vBeachT * 5.0);
+    float washFoam = (1.0 - smoothstep(0.0, washReach, vBeachT)) * washPulse * 0.55;
+    sandColor = mix(sandColor, uFoamColor, clamp(washFoam, 0.0, 1.0));
+
+    float sandMix = smoothstep(5.5, 7.0, vZ);
+    vec3 finalColor = mix(waterColor, sandColor, sandMix);
+
+    gl_FragColor = vec4(finalColor, uOpacity);
+  }
+`;
+
+const geometry = new THREE.PlaneGeometry(40, 34, 64, 54);
+geometry.rotateX(-Math.PI / 2);
+
+const uniforms = {
+  uTime: { value: 0 },
+  uWaveHeight: { value: 0.5 },
+  uWaveSpeed: { value: 0.6 },
+  uChoppiness: { value: 0.2 },
+  uWaterColor: { value: new THREE.Color(0.04, 0.45, 0.55) },
+  uFoamColor: { value: new THREE.Color(0.9, 0.96, 0.96) },
+  uOpacity: { value: 1 },
+};
+
+const material = new THREE.ShaderMaterial({
+  vertexShader: VERT_SHADER,
+  fragmentShader: FRAG_SHADER,
+  uniforms,
+  transparent: true,
+});
+
+const ocean = new THREE.Mesh(geometry, material);
+ocean.position.y = -1;
+scene.add(ocean);
+
+let fogColorObj = new THREE.Color('#4db8cc');
+scene.fog = new THREE.FogExp2(fogColorObj.getHex(), 0.045);
+renderer.setClearColor(fogColorObj.getHex(), 1);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ---------- render loop, paused when tab hidden ---------- */
+let rafId = null;
+const clock = new THREE.Clock();
+
+function renderFrame() {
+  uniforms.uTime.value += clock.getDelta();
+  renderer.render(scene, camera);
+  rafId = requestAnimationFrame(renderFrame);
+}
+function startLoop() {
+  if (rafId === null) {
+    clock.start();
+    rafId = requestAnimationFrame(renderFrame);
+  }
+}
+function stopLoop() {
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopLoop(); else startLoop();
+});
+startLoop();
+
+/* ============================= WAVE PARAMS + MORPH ============================= */
+function getWaveParams(day) {
+  const hRaw = Math.max(0.2, Math.min(1.2, (day.swell.height - 0.3) / 1.2));
+  // stretch the narrow raw range so day-to-day swell size reads clearly on screen
+  let h = Math.min(1.3, 0.2 + (hRaw - 0.2) * 2.2);
+  if (!day.wave) h = 0.16; // no wave breakdown for the day = visually flat, matches "Flat — not worth it"
+  const spd = 0.8 - ((day.swell.period - 5) / 7) * 0.5;
+  const chop = Math.min(1.0, day.swell.wind / 25);
+  return { uWaveHeight: h, uWaveSpeed: spd, uChoppiness: chop };
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function hexToRgb(hex) {
+  const c = new THREE.Color(hex);
+  return [c.r, c.g, c.b];
+}
+function rgbToCss([r, g, b]) {
+  return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
+}
+
+let currentUniforms = { uWaveHeight: 0.5, uWaveSpeed: 0.6, uChoppiness: 0.2 };
+let currentWaterColor = [0.04, 0.45, 0.55];
+let currentSkyTop = hexToRgb('#0a2a4a');
+let currentSkyBottom = hexToRgb('#1a6b8a');
+let currentFog = hexToRgb('#4db8cc');
+
+let activeIndex = 0;
+let morphRaf = null;
+
+function morphTo(index) {
+  const newDay = FORECAST[index];
+  const palette = PALETTES[newDay.call] || PALETTES['SKIP'];
+  const target = getWaveParams(newDay);
+
+  const start = { ...currentUniforms };
+  const startWater = [...currentWaterColor];
+  const startSkyTop = [...currentSkyTop];
+  const startSkyBottom = [...currentSkyBottom];
+  const startFog = [...currentFog];
+
+  const targetWater = palette.waterColor;
+  const targetSkyTop = hexToRgb(palette.skyTop);
+  const targetSkyBottom = hexToRgb(palette.skyBottom);
+  const targetFog = hexToRgb(palette.fogColor);
+
+  activeIndex = index;
+  updateChips(index);
+  fadeUpdateOverlays(newDay);
+  fadeUpdateCard(newDay);
+
+  if (morphRaf) cancelAnimationFrame(morphRaf);
+  const startTime = performance.now();
+  const duration = 650;
+
+  function animate(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+    // dip opacity through the midpoint so the old and new day cross-fade
+    // rather than the water visibly morphing/muddying between two colors
+    // (uses its own uniform, not material.opacity — a custom ShaderMaterial's
+    // fragment shader has to read that value itself, three.js won't apply it)
+    uniforms.uOpacity.value = 1 - 0.68 * Math.sin(t * Math.PI);
+
+    uniforms.uWaveHeight.value = lerp(start.uWaveHeight, target.uWaveHeight, ease);
+    uniforms.uWaveSpeed.value = lerp(start.uWaveSpeed, target.uWaveSpeed, ease);
+    uniforms.uChoppiness.value = lerp(start.uChoppiness, target.uChoppiness, ease);
+    currentUniforms = {
+      uWaveHeight: uniforms.uWaveHeight.value,
+      uWaveSpeed: uniforms.uWaveSpeed.value,
+      uChoppiness: uniforms.uChoppiness.value,
+    };
+
+    const water = [
+      lerp(startWater[0], targetWater[0], ease),
+      lerp(startWater[1], targetWater[1], ease),
+      lerp(startWater[2], targetWater[2], ease),
+    ];
+    uniforms.uWaterColor.value.setRGB(water[0], water[1], water[2]);
+    currentWaterColor = water;
+
+    const skyTop = [
+      lerp(startSkyTop[0], targetSkyTop[0], ease),
+      lerp(startSkyTop[1], targetSkyTop[1], ease),
+      lerp(startSkyTop[2], targetSkyTop[2], ease),
+    ];
+    const skyBottom = [
+      lerp(startSkyBottom[0], targetSkyBottom[0], ease),
+      lerp(startSkyBottom[1], targetSkyBottom[1], ease),
+      lerp(startSkyBottom[2], targetSkyBottom[2], ease),
+    ];
+    currentSkyTop = skyTop;
+    currentSkyBottom = skyBottom;
+    document.body.style.background = `linear-gradient(to bottom, ${rgbToCss(skyTop)}, ${rgbToCss(skyBottom)})`;
+
+    const fog = [
+      lerp(startFog[0], targetFog[0], ease),
+      lerp(startFog[1], targetFog[1], ease),
+      lerp(startFog[2], targetFog[2], ease),
+    ];
+    currentFog = fog;
+    const fogColor = new THREE.Color(fog[0], fog[1], fog[2]);
+    scene.fog.color.copy(fogColor);
+    renderer.setClearColor(fogColor.getHex(), 1);
+
+    if (t < 1) {
+      morphRaf = requestAnimationFrame(animate);
+    } else {
+      morphRaf = null;
+    }
+  }
+  morphRaf = requestAnimationFrame(animate);
+}
+
+/* ============================= OVERLAYS ============================= */
+const spotSub = document.getElementById('spot-sub');
+const verdictWrap = document.getElementById('verdict-wrap');
+const verdictPill = document.getElementById('verdict-pill');
+const waveLabelWrap = document.getElementById('wavelabel-wrap');
+const waveLabel = document.getElementById('wave-label');
+
+function fadeUpdateOverlays(day) {
+  verdictWrap.classList.add('fade-out');
+  waveLabelWrap.classList.add('fade-out');
+
+  setTimeout(() => {
+    spotSub.textContent = `Lagos · ${day.date.replace(/^\w+ /, '')}`;
+    verdictPill.textContent = callPillLabel(day.call);
+    verdictPill.className = 'verdict-pill ' + callClass(day.call);
+
+    if (day.wave) {
+      waveLabel.textContent = `${day.wave.outer.label} high at the break`;
+    } else {
+      waveLabel.textContent = 'Flat — not worth it';
+    }
+
+    verdictWrap.classList.remove('fade-out');
+    waveLabelWrap.classList.remove('fade-out');
+  }, 300);
+}
+
+/* ============================= CARD CONTENT ============================= */
+const peekView = document.getElementById('peek-view');
+const expandedView = document.getElementById('expanded-view');
+
+function rainClass(level) {
+  if (level === 'Heavy') return 'heavy';
+  if (level === 'Light') return 'light';
+  return 'dry';
+}
+function rainLabel(level) {
+  if (level === 'Heavy') return 'Heavy rain';
+  if (level === 'Light') return 'Light rain';
+  return 'Dry';
+}
+
+function renderPeek(day) {
+  const cc = callClass(day.call);
+  const beachRain = rainClass(day.rain.beach);
+  const homeRain = rainClass(day.rain.home);
+  peekView.innerHTML = `
+    <div class="peek-head">
+      <div class="peek-title"><span class="peek-label">${day.label} · </span>${day.date}</div>
+      <div class="badge ${cc}">${callPillLabel(day.call)}</div>
+    </div>
+    <div class="peek-swell"><span class="dot"></span>${day.swell.type} · ${day.swell.period}s</div>
+    <div class="peek-window">Best window &nbsp;<b>${day.tide.window}</b>&nbsp;&nbsp;<span class="ht">HT ${day.tide.ht}</span></div>
+    <div class="peek-stats">${day.swell.height.toFixed(2)}m swell &nbsp;·&nbsp; ${day.swell.wind} km/h wind &nbsp;·&nbsp; ${day.swell.condition} &nbsp;·&nbsp; ${day.detail.score}</div>
+    <div class="peek-rain">
+      <span class="rain-item ${beachRain}"><span class="rain-dot ${beachRain}"></span>Beach: ${rainLabel(day.rain.beach)}</span>
+      <span class="rain-item ${homeRain}"><span class="rain-dot ${homeRain}"></span>Ikoyi: ${rainLabel(day.rain.home)}</span>
+    </div>
+  `;
+}
+
+function renderWaveBars(day) {
+  if (!day.wave) {
+    return `<div class="wave-flat">No meaningful swell — flat at the break.</div>`;
+  }
+  const cols = [
+    { key: 'near', loc: 'Near' },
+    { key: 'mid', loc: 'Mid' },
+    { key: 'outer', loc: 'The Break' },
+  ];
+  const maxH = Math.max(day.wave.near.h, day.wave.mid.h, day.wave.outer.h, 1);
+  return `
+    <div class="wave-visual">
+      ${cols.map(c => {
+        const w = day.wave[c.key];
+        const barH = Math.max(10, (w.h / maxH) * 100);
+        return `
+          <div class="wave-col">
+            <div class="wave-size-label">${w.label}</div>
+            <div class="wave-bar" style="height:${barH}px"></div>
+            <div class="wave-loc-label">${c.loc}</div>
+            <div class="wave-dist-label">${w.m}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderConditionsStrip(day) {
+  const hours = Object.keys(day.scores).map(Number).sort((a, b) => a - b);
+  const segs = hours.map(h => {
+    const segStart = h, segEnd = h + 1;
+    const inTide = segEnd > day.tide.start && segStart < day.tide.end;
+    let cls = 'marginal';
+    if (inTide) cls = 'tide';
+    else if (day.scores[h] >= 55) cls = 'good';
+    return `<div class="strip-seg ${cls}"></div>`;
+  }).join('');
+
+  const tickHours = [7, 9, 11, 13, 15, 17, 19];
+  const ticks = tickHours.map(h => `<span>${String(h).padStart(2,'0')}:00</span>`).join('');
+
+  return `
+    <div class="strip">${segs}</div>
+    <div class="strip-hours">${ticks}</div>
+    <div class="strip-footer">Best: <b>${day.tide.window}</b> · High tide ${day.tide.ht}</div>
+  `;
+}
+
+function renderDetailGrid(day) {
+  const items = [
+    { label: 'Swell direction', value: day.detail.dir },
+    { label: 'Quality score', value: day.detail.score },
+    { label: 'Water temp', value: day.detail.temp },
+    { label: 'Crowd', value: day.detail.crowd },
+  ];
+  return `
+    <div class="detail-grid">
+      ${items.map(i => `
+        <div class="detail-item">
+          <div class="detail-label">${i.label}</div>
+          <div class="detail-value">${i.value}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderExpanded(day) {
+  expandedView.innerHTML = `
+    <div class="wave-block">
+      <div class="section-label">Wave size</div>
+      ${renderWaveBars(day)}
+    </div>
+    <div class="chart-block">
+      <div class="section-label">Conditions</div>
+      ${renderConditionsStrip(day)}
+    </div>
+    <div class="section-label">Detail</div>
+    ${renderDetailGrid(day)}
+  `;
+}
+
+function fadeUpdateCard(day) {
+  peekView.style.transition = 'opacity 0.3s ease';
+  peekView.style.opacity = 0;
+  setTimeout(() => {
+    renderPeek(day);
+    renderExpanded(day);
+    peekView.style.opacity = 1;
+  }, 300);
+}
+
+/* ============================= DAY CHIPS ============================= */
+const chipsRow = document.getElementById('chips-row');
+
+function buildChips() {
+  chipsRow.innerHTML = FORECAST.map((day, i) => `
+    <button class="chip ${i === activeIndex ? 'active ' + callClass(day.call) : ''}" data-index="${i}">${day.day}</button>
+  `).join('');
+
+  chipsRow.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const i = Number(chip.dataset.index);
+      if (i !== activeIndex) morphTo(i);
+    });
+  });
+}
+
+function updateChips(index) {
+  chipsRow.querySelectorAll('.chip').forEach(chip => {
+    const i = Number(chip.dataset.index);
+    chip.className = 'chip ' + (i === index ? 'active ' + callClass(FORECAST[i].call) : '');
+  });
+}
+
+/* ============================= BOTTOM SHEET DRAG ============================= */
+const sheet = document.getElementById('sheet');
+const handleWrap = document.getElementById('sheet-handle-wrap');
+let sheetExpanded = false;
+let dragStartY = null;
+let dragging = false;
+
+function setExpanded(expanded) {
+  sheetExpanded = expanded;
+  sheet.classList.toggle('expanded', expanded);
+}
+
+handleWrap.addEventListener('pointerdown', (e) => {
+  dragStartY = e.clientY;
+  dragging = true;
+  sheet.classList.add('dragging');
+  handleWrap.setPointerCapture(e.pointerId);
+});
+
+handleWrap.addEventListener('pointermove', (e) => {
+  if (!dragging || dragStartY === null) return;
+  const delta = e.clientY - dragStartY;
+  const base = sheetExpanded ? 0 : sheet.offsetHeight - 226;
+  let translate = base + delta;
+  translate = Math.max(0, Math.min(sheet.offsetHeight - 226, translate));
+  sheet.style.transform = `translateY(${translate}px)`;
+});
+
+function endDrag(e) {
+  if (!dragging || dragStartY === null) return;
+  dragging = false;
+  sheet.classList.remove('dragging');
+  sheet.style.transform = '';
+
+  const delta = (e.clientY || dragStartY) - dragStartY;
+  if (Math.abs(delta) > 60) {
+    setExpanded(delta < 0);
+  } else if (Math.abs(delta) < 4) {
+    setExpanded(!sheetExpanded);
+  }
+  dragStartY = null;
+}
+
+handleWrap.addEventListener('pointerup', endDrag);
+handleWrap.addEventListener('pointercancel', endDrag);
+
+/* ============================= INIT ============================= */
+function init() {
+  const day0 = FORECAST[0];
+  const palette0 = PALETTES[day0.call];
+  const wp0 = getWaveParams(day0);
+
+  currentUniforms = wp0;
+  uniforms.uWaveHeight.value = wp0.uWaveHeight;
+  uniforms.uWaveSpeed.value = wp0.uWaveSpeed;
+  uniforms.uChoppiness.value = wp0.uChoppiness;
+
+  currentWaterColor = palette0.waterColor;
+  uniforms.uWaterColor.value.setRGB(...palette0.waterColor);
+
+  currentSkyTop = hexToRgb(palette0.skyTop);
+  currentSkyBottom = hexToRgb(palette0.skyBottom);
+  document.body.style.background = `linear-gradient(to bottom, ${palette0.skyTop}, ${palette0.skyBottom})`;
+
+  currentFog = hexToRgb(palette0.fogColor);
+  const fogColor = new THREE.Color(palette0.fogColor);
+  scene.fog.color.copy(fogColor);
+  renderer.setClearColor(fogColor.getHex(), 1);
+
+  spotSub.textContent = `Lagos · ${day0.date.replace(/^\w+ /, '')}`;
+  verdictPill.textContent = callPillLabel(day0.call);
+  verdictPill.className = 'verdict-pill ' + callClass(day0.call);
+  waveLabel.textContent = day0.wave ? `${day0.wave.outer.label} high at the break` : 'Flat — not worth it';
+
+  renderUpdatedAt();
+  buildChips();
+  renderPeek(day0);
+  renderExpanded(day0);
+}
+
+function renderUpdatedAt() {
+  const el = document.getElementById('updated-at');
+  if (!forecastGeneratedAt) {
+    el.textContent = 'Preview data';
+    el.classList.remove('stale');
+    return;
+  }
+  const hoursAgo = (Date.now() - new Date(forecastGeneratedAt).getTime()) / 36e5;
+  const label = hoursAgo < 1 ? 'Updated just now'
+    : hoursAgo < 2 ? 'Updated 1h ago'
+    : `Updated ${Math.floor(hoursAgo)}h ago`;
+  el.textContent = label;
+  el.classList.toggle('stale', hoursAgo > 8); // 2x the 4h refresh cadence
+}
+
+loadForecast().then(init);
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+name: Update surf forecast
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-forecast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch forecast data
+        env:
+          OPENWEATHERMAP_API_KEY: ${{ secrets.OPENWEATHERMAP_API_KEY }}
+          WORLDTIDES_API_KEY: ${{ secrets.WORLDTIDES_API_KEY }}
+        run: node scripts/fetch-forecast.mjs
+
+      - name: Commit updated forecast
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/forecast.json
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Update surf forecast"
+          git push

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takwa Bay Surf Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Untitled UI PRO Styles tokens */
+    --brand-50:#F9F5FF; --brand-200:#E9D7FE; --brand-600:#7F56D9; --brand-700:#6941C6;
+    --gray-50:#FAFAFA; --gray-100:#F5F5F5; --gray-200:#E9EAEB; --gray-300:#D5D7DA;
+    --gray-400:#A4A7AE; --gray-500:#717680; --gray-600:#535862; --gray-700:#414651; --gray-900:#181D27;
+    --white:#FFFFFF;
+    --success-50:#ECFDF3; --success-200:#ABEFC6; --success-500:#17B26A; --success-600:#079455; --success-700:#067647;
+    --warning-50:#FFFAEB; --warning-200:#FEDF89; --warning-500:#F79009; --warning-600:#DC6803; --warning-700:#B54708;
+    --blue-50:#EFF8FF; --blue-200:#B2DDFF; --blue-500:#2E90FA; --blue-600:#1570EF; --blue-700:#175CD3;
+    --orange-50:#FEF6EE; --orange-200:#F9DBAF; --orange-500:#EF6820; --orange-600:#E04F16; --orange-700:#B93815;
+
+    --shadow-xs: 0px 1px 2px 0px rgba(10,13,18,0.05);
+    --shadow-sm: 0px 1px 3px 0px rgba(10,13,18,0.1), 0px 1px 2px 0px rgba(10,13,18,0.06);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-pill: 6px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--gray-50);
+    padding: 20px 16px 32px;
+  }
+
+  /* Page header (Untitled UI "Page header / Style=Simple") */
+  .header { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .header-title { font-size: 20px; line-height: 30px; font-weight: 600; color: var(--gray-900); }
+  .header-subtitle { font-size: 14px; line-height: 20px; font-weight: 400; color: var(--gray-500); margin-top: 2px; }
+
+  .spot-toggle { display: inline-flex; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-xs); flex-shrink: 0; }
+  .spot-btn {
+    appearance: none; border: 1px solid var(--gray-300); background: var(--white);
+    color: var(--gray-700); font-family: inherit; font-size: 13px; font-weight: 600;
+    line-height: 18px; padding: 8px 12px; cursor: pointer; transition: background .15s, color .15s;
+  }
+  .spot-btn:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); border-right: none; }
+  .spot-btn:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+  .spot-btn.active { background: var(--brand-600); border-color: var(--brand-600); color: var(--white); position: relative; z-index: 1; }
+
+  .lighthouse-note {
+    font-size: 12px; line-height: 18px; color: var(--warning-700); background: var(--warning-50);
+    border: 1px solid var(--warning-200); border-radius: var(--radius-md); padding: 8px 10px;
+  }
+
+  .divider { height: 1px; background: var(--gray-200); margin: 4px 0 16px; }
+
+  /* Alert banner */
+  .alert-banner {
+    background: var(--success-50); border: 1px solid var(--success-200); border-radius: var(--radius-lg);
+    padding: 14px 16px; margin-bottom: 16px;
+  }
+  .alert-banner .title { font-size: 15px; line-height: 22px; font-weight: 600; color: var(--success-700); }
+  .alert-banner .subtitle { font-size: 12px; line-height: 18px; color: var(--success-700); opacity: .85; margin-top: 2px; }
+
+  /* Day cards */
+  .day-list { display: flex; flex-direction: column; gap: 10px; }
+  .day-card {
+    background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs); overflow: hidden;
+  }
+  .day-card-head {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; user-select: none;
+  }
+  .pip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .pip.go { background: var(--success-500); }
+  .pip.plan { background: var(--warning-500); }
+  .pip.marginal { background: var(--gray-400); }
+  .pip.skip { background: var(--gray-200); }
+
+  .day-info { flex: 1 1 auto; min-width: 0; }
+  .day-row1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .day-name { font-size: 14px; font-weight: 600; line-height: 20px; color: var(--gray-900); }
+  .day-summary { font-size: 12px; line-height: 18px; color: var(--gray-500); margin-top: 2px; }
+
+  .badge {
+    display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-pill);
+    font-size: 12px; font-weight: 500; line-height: 18px; white-space: nowrap; border: 1px solid transparent;
+  }
+  .badge.tag-swell { background: var(--blue-50); color: var(--blue-700); border-color: var(--blue-200); }
+  .badge.tag-chop { background: var(--orange-50); color: var(--orange-700); border-color: var(--orange-200); }
+  .badge.call-go { background: var(--success-50); color: var(--success-700); border-color: var(--success-200); }
+  .badge.call-plan { background: var(--warning-50); color: var(--warning-700); border-color: var(--warning-200); }
+  .badge.call-marginal, .badge.call-skip { background: var(--gray-100); color: var(--gray-600); border-color: var(--gray-200); }
+
+  .day-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; max-width: 120px; }
+  .badge-call { white-space: normal; text-align: right; }
+  .chevron { font-size: 12px; color: var(--gray-400); transition: transform .2s ease; }
+  .day-card.open .chevron { transform: rotate(180deg); }
+
+  .day-detail { display: none; padding: 0 14px 16px; border-top: 1px solid var(--gray-200); }
+  .day-card.open .day-detail { display: block; padding-top: 14px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .stat-tile { background: var(--gray-50); border-radius: var(--radius-md); padding: 10px 12px; }
+  .stat-label { font-size: 11px; color: var(--gray-500); font-weight: 500; }
+  .stat-value { font-size: 15px; font-weight: 600; color: var(--gray-900); margin-top: 3px; }
+  .stat-sub { font-size: 11px; color: var(--gray-600); margin-top: 2px; line-height: 15px; }
+
+  /* Wave height visual */
+  .wave-block { margin-bottom: 18px; }
+  .wave-visual { display: flex; align-items: flex-end; gap: 18px; height: 130px; padding: 0 4px; position: relative; }
+  .wave-surfer { font-size: 22px; line-height: 1; align-self: flex-end; margin-bottom: 4px; }
+  .wave-bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+  .wave-bar-label { font-size: 10px; color: var(--gray-600); text-align: center; margin-bottom: 4px; line-height: 13px; }
+  .wave-bar { width: 100%; max-width: 46px; border-radius: 4px 4px 0 0; }
+  .wave-bar-dist { font-size: 10px; color: var(--gray-500); margin-top: 6px; }
+  .wave-footer { font-size: 11px; color: var(--gray-500); margin-top: 10px; line-height: 16px; }
+
+  /* Hourly bar chart */
+  .chart-block {}
+  .chart-legend { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; font-size: 10px; color: var(--gray-600); }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+  .legend-outline { width: 8px; height: 8px; border-radius: 2px; border: 1.5px solid var(--blue-500); }
+
+  .chart-bars-wrap { position: relative; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 2px; height: 70px; }
+  .bar-col { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+  .bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
+
+  .now-line { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--gray-900); opacity: .55; }
+  .now-label { position: absolute; top: -13px; transform: translateX(-50%); font-size: 9px; font-weight: 600; color: var(--gray-700); white-space: nowrap; }
+
+  .chart-hours { display: flex; justify-content: space-between; font-size: 9px; color: var(--gray-400); margin-top: 4px; }
+  .tide-row { position: relative; height: 28px; margin-top: 2px; }
+  .tide-tick { position: absolute; top: 0; transform: translateX(-50%); font-size: 10px; line-height: 13px; color: var(--blue-600); font-weight: 500; text-align: center; white-space: nowrap; }
+  .chart-footer { font-size: 11px; color: var(--gray-500); margin-top: 8px; line-height: 16px; }
+
+  .wave-caveat { font-size: 10px; color: var(--gray-400); margin-top: 4px; line-height: 14px; }
+
+  .footer { text-align: center; font-size: 11px; color: var(--gray-400); margin-top: 24px; }
+
+  .sources { margin-top: 12px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 10px 14px; font-size: 12px; color: var(--gray-600); }
+  .sources summary { cursor: pointer; font-weight: 600; color: var(--gray-700); list-style: none; }
+  .sources summary::-webkit-details-marker { display: none; }
+  .sources summary::before { content: '\25b8\0020'; }
+  .sources[open] summary::before { content: '\25be\0020'; }
+  .sources dl { margin: 10px 0 0; }
+  .sources dt { font-weight: 600; color: var(--gray-700); margin-top: 10px; }
+  .sources dt:first-child { margin-top: 0; }
+  .sources dd { margin: 2px 0 0; line-height: 16px; }
+  .sources a { color: var(--blue-600); }
+
+  @media (min-width: 481px) {
+    .page { box-shadow: var(--shadow-sm); margin-top: 24px; margin-bottom: 24px; border-radius: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title" id="spotTitle">Takwa Bay</div>
+        <div class="header-subtitle" id="spotSubtitle">Lagos &middot; 7-day forecast</div>
+      </div>
+      <div class="spot-toggle">
+        <button class="spot-btn active" data-spot="takwa">Takwa</button>
+        <button class="spot-btn" data-spot="lighthouse">Lighthouse</button>
+      </div>
+    </div>
+    <div class="lighthouse-note" id="lighthouseNote" style="display:none;">Stronger current, choppier faces. Best when Takwa is flat.</div>
+  </div>
+
+  <div id="alertBanner"></div>
+  <div class="day-list" id="dayList"></div>
+
+  <div class="footer">Open-Meteo forecast from Aug 21 &middot; time and window status update live &middot; reload for new forecast numbers</div>
+
+  <details class="sources">
+    <summary>Sources &amp; methodology</summary>
+    <dl>
+      <dt>Swell &amp; wind</dt>
+      <dd>Real data. <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noopener">Open-Meteo Marine API</a> and <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener">Forecast API</a>, hourly, fetched Aug 21, 2026.</dd>
+      <dt>Tide</dt>
+      <dd>Estimated, not measured. Built from one real high tide reading (Aug 21, 10:43am) repeated on a standard 12h25m semi&#8209;diurnal cycle. There is no free live tide station covering this stretch of the Lagos coast.</dd>
+      <dt>Wave face height</dt>
+      <dd>A generic swell height &times; period model, not measured at these spots.</dd>
+      <dt>Distance from shore (close in / mid lineup / the break)</dt>
+      <dd>Typical assumptions for a sandy beach break, not measured at Takwa Bay or Lighthouse. Checked against GEBCO global seafloor data: its grid is about 450m across, far too coarse to resolve anything at this scale, so there's currently no reliable way to verify real distances here.</dd>
+      <dt>Get in the water / worth a look / iffy / not today</dt>
+      <dd>Your own scoring rules, not an external source.</dd>
+    </dl>
+  </details>
+</div>
+
+<script type="application/json" id="surf-data">{"takwa": [{"date": "2026-08-21", "weekday_label": "Fri 21 Aug", "call": "GO NOW", "avg_score": 60, "peak": {"sh": 1.3, "sp": 9, "ws": 12, "time": "6:00am"}, "tide": {"high_tide": "10:43am", "surf_start_h": 9.216666666666667, "surf_end_h": 11.216666666666667, "surf_start": "9:13am", "surf_end": "11:13am", "in_window": true}, "wave": {"nearshore": 0.8, "mid": 1.41, "outer": 2.01, "nearshore_label": "Knee", "mid_label": "Chest", "outer_label": "Overhead"}, "hourly": [{"hour": 0, "score": 75, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.4, "sp": 9.4, "ws": 9.4}, {"hour": 1, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.38, "sp": 9.4, "ws": 10.7}, {"hour": 2, "score": 75, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.38, "sp": 9.3, "ws": 9.6}, {"hour": 3, "score": 75, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.38, "sp": 9.2, "ws": 9.4}, {"hour": 4, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.38, "sp": 9.2, "ws": 10.2}, {"hour": 5, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.36, "sp": 9.2, "ws": 11.6}, {"hour": 6, "score": 60, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.34, "sp": 9.2, "ws": 12.5}, {"hour": 7, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.32, "sp": 9.3, "ws": 11.1}, {"hour": 8, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.3, "sp": 9.3, "ws": 11.4}, {"hour": 9, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.28, "sp": 9.3, "ws": 13.6}, {"hour": 10, "score": 60, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.26, "sp": 9.3, "ws": 14.7}, {"hour": 11, "score": 60, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.24, "sp": 9.3, "ws": 15.3}, {"hour": 12, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.22, "sp": 9.4, "ws": 15.5}, {"hour": 13, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.2, "sp": 9.4, "ws": 15.9}, {"hour": 14, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.18, "sp": 9.5, "ws": 16.2}, {"hour": 15, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.18, "sp": 9.6, "ws": 17.1}, {"hour": 16, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.16, "sp": 9.7, "ws": 19.2}, {"hour": 17, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.14, "sp": 9.8, "ws": 19.6}, {"hour": 18, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.12, "sp": 9.9, "ws": 19.6}, {"hour": 19, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.1, "sp": 10.1, "ws": 18.5}, {"hour": 20, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.1, "ws": 16.6}, {"hour": 21, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.0, "ws": 17.1}, {"hour": 22, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.0, "ws": 16.2}, {"hour": 23, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.1, "ws": 15.8}], "win_start": 6, "win_end": 14}, {"date": "2026-08-22", "weekday_label": "Sat 22 Aug", "call": "GO NOW", "avg_score": 60, "peak": {"sh": 1.1, "sp": 10, "ws": 13, "time": "9:00am"}, "tide": {"high_tide": "11:33am", "surf_start_h": 10.05, "surf_end_h": 12.05, "surf_start": "10:03am", "surf_end": "12:03pm", "in_window": true}, "wave": {"nearshore": 0.65, "mid": 1.13, "outer": 1.62, "nearshore_label": "Knee", "mid_label": "Waist", "outer_label": "Head"}, "hourly": [{"hour": 0, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 10.1, "ws": 14.0}, {"hour": 1, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 10.2, "ws": 15.2}, {"hour": 2, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 10.2, "ws": 14.3}, {"hour": 3, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 10.4, "ws": 15.4}, {"hour": 4, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.4, "ws": 13.5}, {"hour": 5, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.4, "ws": 10.5}, {"hour": 6, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.3, "ws": 13.2}, {"hour": 7, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.3, "ws": 13.2}, {"hour": 8, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.3, "ws": 14.2}, {"hour": 9, "score": 60, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.08, "sp": 10.3, "ws": 12.8}, {"hour": 10, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 12.4}, {"hour": 11, "score": 60, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 14.4}, {"hour": 12, "score": 60, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 16.1}, {"hour": 13, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 17.3}, {"hour": 14, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 18.4}, {"hour": 15, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.2, "ws": 19.3}, {"hour": 16, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.2, "ws": 19.5}, {"hour": 17, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.2, "ws": 19.0}, {"hour": 18, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.3, "ws": 18.1}, {"hour": 19, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.3, "ws": 16.1}, {"hour": 20, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 15.3}, {"hour": 21, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 13.6}, {"hour": 22, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 13.4}, {"hour": 23, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 12.4}], "win_start": 6, "win_end": 18}, {"date": "2026-08-23", "weekday_label": "Sun 23 Aug", "call": "GO NOW", "avg_score": 65, "peak": {"sh": 1.0, "sp": 10, "ws": 8, "time": "6:00am"}, "tide": {"high_tide": "12:23pm", "surf_start_h": 10.883333333333333, "surf_end_h": 12.883333333333333, "surf_start": "10:53am", "surf_end": "12:53pm", "in_window": true}, "wave": {"nearshore": 0.61, "mid": 1.07, "outer": 1.53, "nearshore_label": "Knee", "mid_label": "Waist", "outer_label": "Head"}, "hourly": [{"hour": 0, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 12.5}, {"hour": 1, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 12.9}, {"hour": 2, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 13.0}, {"hour": 3, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.2, "ws": 11.2}, {"hour": 4, "score": 75, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.2, "ws": 9.7}, {"hour": 5, "score": 75, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.2, "ws": 8.7}, {"hour": 6, "score": 75, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.02, "sp": 10.2, "ws": 8.2}, {"hour": 7, "score": 75, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.2, "ws": 7.5}, {"hour": 8, "score": 75, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.2, "ws": 8.3}, {"hour": 9, "score": 75, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.1, "ws": 8.6}, {"hour": 10, "score": 75, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.1, "ws": 8.5}, {"hour": 11, "score": 60, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.0, "sp": 10.1, "ws": 10.9}, {"hour": 12, "score": 60, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.0, "sp": 10.1, "ws": 12.3}, {"hour": 13, "score": 65, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 10.1, "ws": 9.7}, {"hour": 14, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 10.1, "ws": 14.1}, {"hour": 15, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 10.1, "ws": 11.5}, {"hour": 16, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 10.1, "ws": 11.4}, {"hour": 17, "score": 65, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 10.0, "ws": 8.0}, {"hour": 18, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.9, "ws": 11.0}, {"hour": 19, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.8, "ws": 8.4}, {"hour": 20, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.8, "ws": 6.6}, {"hour": 21, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 9.8, "ws": 7.2}, {"hour": 22, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 9.8, "ws": 8.5}, {"hour": 23, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 9.7, "ws": 8.2}], "win_start": 6, "win_end": 18}, {"date": "2026-08-24", "weekday_label": "Mon 24 Aug", "call": "GO NOW", "avg_score": 81, "peak": {"sh": 1.1, "sp": 8, "ws": 7, "time": "6:00am"}, "tide": {"high_tide": "1:13pm", "surf_start_h": 11.716666666666667, "surf_end_h": 13.716666666666667, "surf_start": "11:43am", "surf_end": "1:43pm", "in_window": true}, "wave": {"nearshore": 0.65, "mid": 1.13, "outer": 1.62, "nearshore_label": "Knee", "mid_label": "Waist", "outer_label": "Head"}, "hourly": [{"hour": 0, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.6, "ws": 7.9}, {"hour": 1, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.5, "ws": 7.8}, {"hour": 2, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.5, "ws": 6.7}, {"hour": 3, "score": 80, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.5, "ws": 6.3}, {"hour": 4, "score": 80, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.3, "ws": 7.0}, {"hour": 5, "score": 90, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 8.9, "ws": 7.4}, {"hour": 6, "score": 90, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.08, "sp": 8.4, "ws": 7.4}, {"hour": 7, "score": 90, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.12, "sp": 8.1, "ws": 7.3}, {"hour": 8, "score": 80, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.12, "sp": 8.0, "ws": 6.9}, {"hour": 9, "score": 90, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.1, "sp": 8.0, "ws": 7.8}, {"hour": 10, "score": 90, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.1, "sp": 8.1, "ws": 7.3}, {"hour": 11, "score": 75, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 8.1, "ws": 5.0}, {"hour": 12, "score": 75, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.08, "sp": 8.2, "ws": 4.0}, {"hour": 13, "score": 60, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.06, "sp": 8.2, "ws": 10.6}, {"hour": 14, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 8.2, "ws": 13.1}, {"hour": 15, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 8.3, "ws": 15.3}, {"hour": 16, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 8.3, "ws": 16.4}, {"hour": 17, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 8.3, "ws": 16.5}, {"hour": 18, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 8.3, "ws": 17.0}, {"hour": 19, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 8.3, "ws": 16.2}, {"hour": 20, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 8.3, "ws": 13.6}, {"hour": 21, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 8.3, "ws": 14.2}, {"hour": 22, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 8.4, "ws": 12.8}, {"hour": 23, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.94, "sp": 8.4, "ws": 11.1}], "win_start": 6, "win_end": 14}, {"date": "2026-08-25", "weekday_label": "Tue 25 Aug", "call": "WORTH PLANNING", "avg_score": 56, "peak": {"sh": 0.9, "sp": 8, "ws": 9, "time": "6:00am"}, "tide": {"high_tide": "2:03pm", "surf_start_h": 12.55, "surf_end_h": 14.55, "surf_start": "12:33pm", "surf_end": "2:33pm", "in_window": true}, "wave": {"nearshore": 0.54, "mid": 0.94, "outer": 1.35, "nearshore_label": "Knee", "mid_label": "Waist", "outer_label": "Chest"}, "hourly": [{"hour": 0, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.94, "sp": 8.6, "ws": 8.8}, {"hour": 1, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.92, "sp": 8.6, "ws": 10.2}, {"hour": 2, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.92, "sp": 8.4, "ws": 10.1}, {"hour": 3, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.92, "sp": 8.2, "ws": 10.2}, {"hour": 4, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.92, "sp": 8.2, "ws": 10.0}, {"hour": 5, "score": 65, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.9, "sp": 8.2, "ws": 9.4}, {"hour": 6, "score": 65, "in_window": true, "in_tide": false, "is_peak": true, "sh": 0.9, "sp": 8.2, "ws": 8.9}, {"hour": 7, "score": 65, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.88, "sp": 8.3, "ws": 9.0}, {"hour": 8, "score": 65, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.88, "sp": 8.4, "ws": 9.8}, {"hour": 9, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.86, "sp": 8.5, "ws": 11.2}, {"hour": 10, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.86, "sp": 8.5, "ws": 12.6}, {"hour": 11, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.84, "sp": 8.4, "ws": 13.5}, {"hour": 12, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.84, "sp": 8.2, "ws": 14.8}, {"hour": 13, "score": 50, "in_window": true, "in_tide": true, "is_peak": false, "sh": 0.82, "sp": 8.2, "ws": 16.0}, {"hour": 14, "score": 50, "in_window": false, "in_tide": true, "is_peak": false, "sh": 0.8, "sp": 8.2, "ws": 16.9}, {"hour": 15, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.8, "sp": 8.2, "ws": 17.4}, {"hour": 16, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 8.3, "ws": 17.7}, {"hour": 17, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 8.3, "ws": 17.5}, {"hour": 18, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 16.9}, {"hour": 19, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 16.2}, {"hour": 20, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 15.6}, {"hour": 21, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 8.6, "ws": 14.8}, {"hour": 22, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 8.7, "ws": 13.9}, {"hour": 23, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.7, "ws": 12.7}], "win_start": 6, "win_end": 14}, {"date": "2026-08-26", "weekday_label": "Wed 26 Aug", "call": "WORTH PLANNING", "avg_score": 46, "peak": {"sh": 0.8, "sp": 8, "ws": 20, "time": "1:00pm"}, "tide": {"high_tide": "2:53pm", "surf_start_h": 13.383333333333333, "surf_end_h": 15.383333333333333, "surf_start": "1:23pm", "surf_end": "3:23pm", "in_window": true}, "wave": {"nearshore": 0.46, "mid": 0.8, "outer": 1.14, "nearshore_label": "Ankle", "mid_label": "Knee", "outer_label": "Waist"}, "hourly": [{"hour": 0, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.74, "sp": 8.5, "ws": 11.6}, {"hour": 1, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.4, "ws": 11.2}, {"hour": 2, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.3, "ws": 11.3}, {"hour": 3, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.2, "ws": 11.5}, {"hour": 4, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.2, "ws": 11.9}, {"hour": 5, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.2, "ws": 11.8}, {"hour": 6, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.1, "ws": 11.8}, {"hour": 7, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.0, "ws": 11.8}, {"hour": 8, "score": 40, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.0, "ws": 11.9}, {"hour": 9, "score": 40, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.0, "ws": 12.5}, {"hour": 10, "score": 40, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.0, "ws": 13.5}, {"hour": 11, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.74, "sp": 8.1, "ws": 15.6}, {"hour": 12, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.74, "sp": 8.2, "ws": 18.4}, {"hour": 13, "score": 50, "in_window": true, "in_tide": false, "is_peak": true, "sh": 0.76, "sp": 8.2, "ws": 20.3}, {"hour": 14, "score": 50, "in_window": false, "in_tide": true, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 20.7}, {"hour": 15, "score": 50, "in_window": false, "in_tide": true, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 20.1}, {"hour": 16, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 19.5}, {"hour": 17, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 18.7}, {"hour": 18, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 17.8}, {"hour": 19, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 16.8}, {"hour": 20, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 15.9}, {"hour": 21, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 15.2}, {"hour": 22, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 14.4}, {"hour": 23, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.0, "ws": 14.1}], "win_start": 6, "win_end": 14}, {"date": "2026-08-27", "weekday_label": "Thu 27 Aug", "call": "WORTH PLANNING", "avg_score": 51, "peak": {"sh": 1.0, "sp": 6, "ws": 12, "time": "1:00pm"}, "tide": {"high_tide": "3:43pm", "surf_start_h": 14.216666666666667, "surf_end_h": 16.216666666666665, "surf_start": "2:13pm", "surf_end": "4:13pm", "in_window": false}, "wave": {"nearshore": 0.45, "mid": 0.79, "outer": 1.12, "nearshore_label": "Ankle", "mid_label": "Knee", "outer_label": "Waist"}, "hourly": [{"hour": 0, "score": 40, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 7.5, "ws": 13.8}, {"hour": 1, "score": 40, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 7.0, "ws": 13.2}, {"hour": 2, "score": 30, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 6.0, "ws": 11.4}, {"hour": 3, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 4.8, "ws": 9.0}, {"hour": 4, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 4.2, "ws": 7.7}, {"hour": 5, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 5.1, "ws": 8.1}, {"hour": 6, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 6.6, "ws": 9.4}, {"hour": 7, "score": 40, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 7.5, "ws": 10.6}, {"hour": 8, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.84, "sp": 7.3, "ws": 8.4}, {"hour": 9, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.9, "sp": 6.6, "ws": 8.9}, {"hour": 10, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 6.0, "ws": 9.8}, {"hour": 11, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.0, "ws": 10.7}, {"hour": 12, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.2, "ws": 11.6}, {"hour": 13, "score": 50, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.02, "sp": 6.3, "ws": 12.4}, {"hour": 14, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 6.3, "ws": 13.0}, {"hour": 15, "score": 50, "in_window": false, "in_tide": true, "is_peak": false, "sh": 1.02, "sp": 6.3, "ws": 13.6}, {"hour": 16, "score": 50, "in_window": false, "in_tide": true, "is_peak": false, "sh": 1.02, "sp": 6.3, "ws": 14.1}, {"hour": 17, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.3, "ws": 14.7}, {"hour": 18, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.4, "ws": 15.2}, {"hour": 19, "score": 40, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 6.4, "ws": 15.3}, {"hour": 20, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.3, "ws": 15.3}, {"hour": 21, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.2, "ws": 15.1}, {"hour": 22, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 6.2, "ws": 14.8}, {"hour": 23, "score": 50, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 6.1, "ws": 14.4}], "win_start": 6, "win_end": 14}], "lighthouse": [{"date": "2026-08-21", "weekday_label": "Fri 21 Aug", "call": "WORTH PLANNING", "avg_score": 55, "peak": {"sh": 1.3, "sp": 9, "ws": 14, "time": "6:00am"}, "tide": {"high_tide": "10:43am", "surf_start_h": 9.216666666666667, "surf_end_h": 11.216666666666667, "surf_start": "9:13am", "surf_end": "11:13am", "in_window": true}, "wave": {"nearshore": 0.8, "mid": 1.41, "outer": 2.01, "nearshore_label": "Knee", "mid_label": "Chest", "outer_label": "Overhead"}, "hourly": [{"hour": 0, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.4, "sp": 9.4, "ws": 10.8}, {"hour": 1, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.38, "sp": 9.4, "ws": 12.3}, {"hour": 2, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.38, "sp": 9.3, "ws": 11.0}, {"hour": 3, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.38, "sp": 9.2, "ws": 10.8}, {"hour": 4, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.38, "sp": 9.2, "ws": 11.7}, {"hour": 5, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.36, "sp": 9.2, "ws": 13.3}, {"hour": 6, "score": 55, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.34, "sp": 9.2, "ws": 14.4}, {"hour": 7, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.32, "sp": 9.3, "ws": 12.8}, {"hour": 8, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.3, "sp": 9.3, "ws": 13.1}, {"hour": 9, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.28, "sp": 9.3, "ws": 15.6}, {"hour": 10, "score": 55, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.26, "sp": 9.3, "ws": 16.9}, {"hour": 11, "score": 55, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.24, "sp": 9.3, "ws": 17.6}, {"hour": 12, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.22, "sp": 9.4, "ws": 17.8}, {"hour": 13, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.2, "sp": 9.4, "ws": 18.3}, {"hour": 14, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.18, "sp": 9.5, "ws": 18.6}, {"hour": 15, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.18, "sp": 9.6, "ws": 19.7}, {"hour": 16, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.16, "sp": 9.7, "ws": 22.1}, {"hour": 17, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.14, "sp": 9.8, "ws": 22.5}, {"hour": 18, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.12, "sp": 9.9, "ws": 22.5}, {"hour": 19, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.1, "sp": 10.1, "ws": 21.3}, {"hour": 20, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.1, "ws": 19.1}, {"hour": 21, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.0, "ws": 19.7}, {"hour": 22, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.0, "ws": 18.6}, {"hour": 23, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.1, "ws": 18.2}], "win_start": 6, "win_end": 14}, {"date": "2026-08-22", "weekday_label": "Sat 22 Aug", "call": "WORTH PLANNING", "avg_score": 55, "peak": {"sh": 1.1, "sp": 10, "ws": 15, "time": "9:00am"}, "tide": {"high_tide": "11:33am", "surf_start_h": 10.05, "surf_end_h": 12.05, "surf_start": "10:03am", "surf_end": "12:03pm", "in_window": true}, "wave": {"nearshore": 0.65, "mid": 1.13, "outer": 1.62, "nearshore_label": "Knee", "mid_label": "Waist", "outer_label": "Head"}, "hourly": [{"hour": 0, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 10.1, "ws": 16.1}, {"hour": 1, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 10.2, "ws": 17.5}, {"hour": 2, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 10.2, "ws": 16.4}, {"hour": 3, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 10.4, "ws": 17.7}, {"hour": 4, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.4, "ws": 15.5}, {"hour": 5, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.4, "ws": 12.1}, {"hour": 6, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.3, "ws": 15.2}, {"hour": 7, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.3, "ws": 15.2}, {"hour": 8, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.3, "ws": 16.3}, {"hour": 9, "score": 55, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.08, "sp": 10.3, "ws": 14.7}, {"hour": 10, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 14.3}, {"hour": 11, "score": 55, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 16.6}, {"hour": 12, "score": 55, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 18.5}, {"hour": 13, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 19.9}, {"hour": 14, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.3, "ws": 21.2}, {"hour": 15, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.2, "ws": 22.2}, {"hour": 16, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.2, "ws": 22.4}, {"hour": 17, "score": 55, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 10.2, "ws": 21.8}, {"hour": 18, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.3, "ws": 20.8}, {"hour": 19, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.3, "ws": 18.5}, {"hour": 20, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 17.6}, {"hour": 21, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 15.6}, {"hour": 22, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 15.4}, {"hour": 23, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 14.3}], "win_start": 6, "win_end": 18}, {"date": "2026-08-23", "weekday_label": "Sun 23 Aug", "call": "WORTH PLANNING", "avg_score": 58, "peak": {"sh": 1.0, "sp": 10, "ws": 9, "time": "6:00am"}, "tide": {"high_tide": "12:23pm", "surf_start_h": 10.883333333333333, "surf_end_h": 12.883333333333333, "surf_start": "10:53am", "surf_end": "12:53pm", "in_window": true}, "wave": {"nearshore": 0.61, "mid": 1.07, "outer": 1.53, "nearshore_label": "Knee", "mid_label": "Waist", "outer_label": "Head"}, "hourly": [{"hour": 0, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 14.4}, {"hour": 1, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 14.8}, {"hour": 2, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 10.2, "ws": 14.9}, {"hour": 3, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.2, "ws": 12.9}, {"hour": 4, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.2, "ws": 11.2}, {"hour": 5, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 10.2, "ws": 10.0}, {"hour": 6, "score": 70, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.02, "sp": 10.2, "ws": 9.4}, {"hour": 7, "score": 70, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.2, "ws": 8.6}, {"hour": 8, "score": 70, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.2, "ws": 9.5}, {"hour": 9, "score": 70, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.1, "ws": 9.9}, {"hour": 10, "score": 70, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 10.1, "ws": 9.8}, {"hour": 11, "score": 55, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.0, "sp": 10.1, "ws": 12.5}, {"hour": 12, "score": 55, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.0, "sp": 10.1, "ws": 14.1}, {"hour": 13, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 10.1, "ws": 11.2}, {"hour": 14, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 10.1, "ws": 16.2}, {"hour": 15, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 10.1, "ws": 13.2}, {"hour": 16, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 10.1, "ws": 13.1}, {"hour": 17, "score": 60, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 10.0, "ws": 9.2}, {"hour": 18, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.9, "ws": 12.6}, {"hour": 19, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.8, "ws": 9.7}, {"hour": 20, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.8, "ws": 7.6}, {"hour": 21, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 9.8, "ws": 8.3}, {"hour": 22, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 9.8, "ws": 9.8}, {"hour": 23, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 9.7, "ws": 9.4}], "win_start": 6, "win_end": 18}, {"date": "2026-08-24", "weekday_label": "Mon 24 Aug", "call": "GO NOW", "avg_score": 76, "peak": {"sh": 1.1, "sp": 8, "ws": 9, "time": "6:00am"}, "tide": {"high_tide": "1:13pm", "surf_start_h": 11.716666666666667, "surf_end_h": 13.716666666666667, "surf_start": "11:43am", "surf_end": "1:43pm", "in_window": true}, "wave": {"nearshore": 0.65, "mid": 1.13, "outer": 1.62, "nearshore_label": "Knee", "mid_label": "Waist", "outer_label": "Head"}, "hourly": [{"hour": 0, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.6, "ws": 9.1}, {"hour": 1, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.5, "ws": 9.0}, {"hour": 2, "score": 60, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.5, "ws": 7.7}, {"hour": 3, "score": 75, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.5, "ws": 7.2}, {"hour": 4, "score": 75, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 9.3, "ws": 8.0}, {"hour": 5, "score": 85, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 8.9, "ws": 8.5}, {"hour": 6, "score": 85, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.08, "sp": 8.4, "ws": 8.5}, {"hour": 7, "score": 85, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.12, "sp": 8.1, "ws": 8.4}, {"hour": 8, "score": 75, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.12, "sp": 8.0, "ws": 7.9}, {"hour": 9, "score": 85, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.1, "sp": 8.0, "ws": 9.0}, {"hour": 10, "score": 85, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.1, "sp": 8.1, "ws": 8.4}, {"hour": 11, "score": 70, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.08, "sp": 8.1, "ws": 5.8}, {"hour": 12, "score": 70, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.08, "sp": 8.2, "ws": 4.6}, {"hour": 13, "score": 55, "in_window": true, "in_tide": true, "is_peak": false, "sh": 1.06, "sp": 8.2, "ws": 12.2}, {"hour": 14, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.06, "sp": 8.2, "ws": 15.1}, {"hour": 15, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 8.3, "ws": 17.6}, {"hour": 16, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.04, "sp": 8.3, "ws": 18.9}, {"hour": 17, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 8.3, "ws": 19.0}, {"hour": 18, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 8.3, "ws": 19.5}, {"hour": 19, "score": 55, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 8.3, "ws": 18.6}, {"hour": 20, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 8.3, "ws": 15.6}, {"hour": 21, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 8.3, "ws": 16.3}, {"hour": 22, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.96, "sp": 8.4, "ws": 14.7}, {"hour": 23, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.94, "sp": 8.4, "ws": 12.8}], "win_start": 6, "win_end": 14}, {"date": "2026-08-25", "weekday_label": "Tue 25 Aug", "call": "WORTH PLANNING", "avg_score": 45, "peak": {"sh": 0.9, "sp": 8, "ws": 10, "time": "6:00am"}, "tide": {"high_tide": "2:03pm", "surf_start_h": 12.55, "surf_end_h": 14.55, "surf_start": "12:33pm", "surf_end": "2:33pm", "in_window": true}, "wave": {"nearshore": 0.54, "mid": 0.94, "outer": 1.35, "nearshore_label": "Knee", "mid_label": "Waist", "outer_label": "Chest"}, "hourly": [{"hour": 0, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.94, "sp": 8.6, "ws": 10.1}, {"hour": 1, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.92, "sp": 8.6, "ws": 11.7}, {"hour": 2, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.92, "sp": 8.4, "ws": 11.6}, {"hour": 3, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.92, "sp": 8.2, "ws": 11.7}, {"hour": 4, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.92, "sp": 8.2, "ws": 11.5}, {"hour": 5, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.9, "sp": 8.2, "ws": 10.8}, {"hour": 6, "score": 45, "in_window": true, "in_tide": false, "is_peak": true, "sh": 0.9, "sp": 8.2, "ws": 10.2}, {"hour": 7, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.88, "sp": 8.3, "ws": 10.3}, {"hour": 8, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.88, "sp": 8.4, "ws": 11.3}, {"hour": 9, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.86, "sp": 8.5, "ws": 12.9}, {"hour": 10, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.86, "sp": 8.5, "ws": 14.5}, {"hour": 11, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.84, "sp": 8.4, "ws": 15.5}, {"hour": 12, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.84, "sp": 8.2, "ws": 17.0}, {"hour": 13, "score": 45, "in_window": true, "in_tide": true, "is_peak": false, "sh": 0.82, "sp": 8.2, "ws": 18.4}, {"hour": 14, "score": 45, "in_window": false, "in_tide": true, "is_peak": false, "sh": 0.8, "sp": 8.2, "ws": 19.4}, {"hour": 15, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.8, "sp": 8.2, "ws": 20.0}, {"hour": 16, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 8.3, "ws": 20.4}, {"hour": 17, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 8.3, "ws": 20.1}, {"hour": 18, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 19.4}, {"hour": 19, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 18.6}, {"hour": 20, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 17.9}, {"hour": 21, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 8.6, "ws": 17.0}, {"hour": 22, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 8.7, "ws": 16.0}, {"hour": 23, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.7, "ws": 14.6}], "win_start": 6, "win_end": 14}, {"date": "2026-08-26", "weekday_label": "Wed 26 Aug", "call": "MARGINAL", "avg_score": 41, "peak": {"sh": 0.8, "sp": 8, "ws": 23, "time": "1:00pm"}, "tide": {"high_tide": "2:53pm", "surf_start_h": 13.383333333333333, "surf_end_h": 15.383333333333333, "surf_start": "1:23pm", "surf_end": "3:23pm", "in_window": true}, "wave": {"nearshore": 0.46, "mid": 0.8, "outer": 1.14, "nearshore_label": "Ankle", "mid_label": "Knee", "outer_label": "Waist"}, "hourly": [{"hour": 0, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.74, "sp": 8.5, "ws": 13.3}, {"hour": 1, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.4, "ws": 12.9}, {"hour": 2, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.3, "ws": 13.0}, {"hour": 3, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.2, "ws": 13.2}, {"hour": 4, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.2, "ws": 13.7}, {"hour": 5, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.2, "ws": 13.6}, {"hour": 6, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.1, "ws": 13.6}, {"hour": 7, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.0, "ws": 13.6}, {"hour": 8, "score": 35, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.0, "ws": 13.7}, {"hour": 9, "score": 35, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.0, "ws": 14.4}, {"hour": 10, "score": 35, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.72, "sp": 8.0, "ws": 15.5}, {"hour": 11, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.74, "sp": 8.1, "ws": 17.9}, {"hour": 12, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.74, "sp": 8.2, "ws": 21.2}, {"hour": 13, "score": 45, "in_window": true, "in_tide": false, "is_peak": true, "sh": 0.76, "sp": 8.2, "ws": 23.3}, {"hour": 14, "score": 45, "in_window": false, "in_tide": true, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 23.8}, {"hour": 15, "score": 45, "in_window": false, "in_tide": true, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 23.1}, {"hour": 16, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 22.4}, {"hour": 17, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 21.5}, {"hour": 18, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 20.5}, {"hour": 19, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 19.3}, {"hour": 20, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 18.3}, {"hour": 21, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.4, "ws": 17.5}, {"hour": 22, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.3, "ws": 16.6}, {"hour": 23, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 8.0, "ws": 16.2}], "win_start": 6, "win_end": 14}, {"date": "2026-08-27", "weekday_label": "Thu 27 Aug", "call": "MARGINAL", "avg_score": 41, "peak": {"sh": 1.0, "sp": 6, "ws": 14, "time": "1:00pm"}, "tide": {"high_tide": "3:43pm", "surf_start_h": 14.216666666666667, "surf_end_h": 16.216666666666665, "surf_start": "2:13pm", "surf_end": "4:13pm", "in_window": false}, "wave": {"nearshore": 0.45, "mid": 0.79, "outer": 1.12, "nearshore_label": "Ankle", "mid_label": "Knee", "outer_label": "Waist"}, "hourly": [{"hour": 0, "score": 35, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 7.5, "ws": 15.9}, {"hour": 1, "score": 35, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 7.0, "ws": 15.2}, {"hour": 2, "score": 25, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 6.0, "ws": 13.1}, {"hour": 3, "score": 25, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 4.8, "ws": 10.3}, {"hour": 4, "score": 40, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 4.2, "ws": 8.9}, {"hour": 5, "score": 40, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.78, "sp": 5.1, "ws": 9.3}, {"hour": 6, "score": 35, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 6.6, "ws": 10.8}, {"hour": 7, "score": 35, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.76, "sp": 7.5, "ws": 12.2}, {"hour": 8, "score": 50, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.84, "sp": 7.3, "ws": 9.7}, {"hour": 9, "score": 35, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.9, "sp": 6.6, "ws": 10.2}, {"hour": 10, "score": 35, "in_window": true, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 6.0, "ws": 11.3}, {"hour": 11, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.0, "ws": 12.3}, {"hour": 12, "score": 45, "in_window": true, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.2, "ws": 13.3}, {"hour": 13, "score": 45, "in_window": true, "in_tide": false, "is_peak": true, "sh": 1.02, "sp": 6.3, "ws": 14.3}, {"hour": 14, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 6.3, "ws": 14.9}, {"hour": 15, "score": 45, "in_window": false, "in_tide": true, "is_peak": false, "sh": 1.02, "sp": 6.3, "ws": 15.6}, {"hour": 16, "score": 45, "in_window": false, "in_tide": true, "is_peak": false, "sh": 1.02, "sp": 6.3, "ws": 16.2}, {"hour": 17, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.3, "ws": 16.9}, {"hour": 18, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.4, "ws": 17.5}, {"hour": 19, "score": 35, "in_window": false, "in_tide": false, "is_peak": false, "sh": 0.98, "sp": 6.4, "ws": 17.6}, {"hour": 20, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.3, "ws": 17.6}, {"hour": 21, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.0, "sp": 6.2, "ws": 17.4}, {"hour": 22, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 6.2, "ws": 17.0}, {"hour": 23, "score": 45, "in_window": false, "in_tide": false, "is_peak": false, "sh": 1.02, "sp": 6.1, "ws": 16.6}], "win_start": 6, "win_end": 14}]}</script>
+<script>
+const DATA = JSON.parse(document.getElementById('surf-data').textContent);
+let currentSpot = 'takwa';
+const openCards = new Set();
+
+const CALL_LABELS = {
+  'GO NOW': 'Get in the water',
+  'WORTH PLANNING': 'Worth a look',
+  'MARGINAL': 'Iffy',
+  'SKIP': 'Not today',
+};
+
+function nowInLagos() {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short',
+  });
+  const parts = {};
+  fmt.formatToParts(new Date()).forEach(p => { parts[p.type] = p.value; });
+  const hourInt = parseInt(parts.hour, 10) % 24;
+  const minute = parseInt(parts.minute, 10);
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    hour: hourInt + minute / 60,
+    hourInt, minute,
+    weekday: parts.weekday,
+  };
+}
+
+function formatClock(now) {
+  const h12 = now.hourInt % 12 === 0 ? 12 : now.hourInt % 12;
+  const period = now.hourInt >= 12 ? 'pm' : 'am';
+  return `${h12}:${String(now.minute).padStart(2, '0')}${period}`;
+}
+
+function formatDateLabel(now) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const [, m, d] = now.date.split('-').map(Number);
+  return `${now.weekday} ${d} ${months[m - 1]}`;
+}
+
+function formatHour(h) {
+  const hh = Math.floor(h);
+  const period = hh >= 12 ? 'pm' : 'am';
+  let h12 = hh % 12; if (h12 === 0) h12 = 12;
+  return `${h12}${period}`;
+}
+
+function tomorrowDateStr(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+const SCORE_COLORS = {
+  excellent: 'var(--success-500)',
+  good: 'var(--warning-500)',
+  marginal: 'var(--gray-400)',
+  poor: 'var(--gray-200)',
+};
+
+function scoreColor(score) {
+  if (score >= 70) return SCORE_COLORS.excellent;
+  if (score >= 55) return SCORE_COLORS.good;
+  if (score >= 35) return SCORE_COLORS.marginal;
+  return SCORE_COLORS.poor;
+}
+
+function callClass(call) {
+  if (call === 'GO NOW') return 'call-go';
+  if (call === 'WORTH PLANNING') return 'call-plan';
+  if (call === 'MARGINAL') return 'call-marginal';
+  return 'call-skip';
+}
+
+function pipClass(call) {
+  if (call === 'GO NOW') return 'go';
+  if (call === 'WORTH PLANNING') return 'plan';
+  if (call === 'MARGINAL') return 'marginal';
+  return 'skip';
+}
+
+function dayLabel(day, now) {
+  if (day.date === now.date) return 'Today';
+  if (day.date === tomorrowDateStr(now.date)) return 'Tomorrow';
+  return day.weekday_label;
+}
+
+function fmtKmh(v) { return Math.round(v); }
+
+function renderAlertBanner(days, now) {
+  const today = days.find(d => d.date === now.date);
+  const box = document.getElementById('alertBanner');
+  const windowClosed = today && now.hour >= today.win_end;
+  if (!today || windowClosed || (today.call !== 'GO NOW' && today.call !== 'WORTH PLANNING') || !today.peak) {
+    box.innerHTML = '';
+    return;
+  }
+  const spotName = currentSpot === 'takwa' ? 'Takwa Bay' : 'Lighthouse';
+  const title = today.call === 'GO NOW' ? `Get in the water today at ${spotName}` : `Worth checking today at ${spotName}`;
+  const tideStr = today.tide ? today.tide.high_tide : 'n/a';
+  box.innerHTML = `
+    <div class="alert-banner">
+      <div class="title">${title}</div>
+      <div class="subtitle">${today.peak.sh.toFixed(1)}m swell &middot; ${today.peak.sp}s period &middot; Wind ${fmtKmh(today.peak.ws)} km/h &middot; High tide ${tideStr}</div>
+    </div>`;
+}
+
+function renderStatTiles(day) {
+  const p = day.peak;
+  if (!p) return '<div class="stat-grid"></div>';
+  const periodSub = p.sp >= 11 ? 'Long period: powerful sets' : (p.sp >= 8 ? 'Medium period: decent shape' : 'Short period: wind chop');
+  const swellSub = p.sp >= 8 ? 'Groundswell: clean, organised waves' : 'Wind chop: messy, harder to read';
+  const windSub = p.ws < 15 ? 'Light: clean faces likely' : 'Strong: expect chop on faces';
+  const tide = day.tide;
+  const tideVal = tide ? `${tide.surf_start}-${tide.surf_end}` : 'n/a';
+  const tideSub = tide && tide.in_window ? `High tide ${tide.high_tide}` : 'No suitable tide in window';
+  return `
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="stat-label">Swell height</div>
+        <div class="stat-value">${p.sh.toFixed(1)}m</div>
+        <div class="stat-sub">${swellSub}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Period</div>
+        <div class="stat-value">${p.sp}s</div>
+        <div class="stat-sub">${periodSub}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Wind speed</div>
+        <div class="stat-value">${fmtKmh(p.ws)} km/h</div>
+        <div class="stat-sub">${windSub}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Best tide window</div>
+        <div class="stat-value">${tideVal}</div>
+        <div class="stat-sub">${tideSub}</div>
+      </div>
+    </div>`;
+}
+
+function renderWaveVisual(day) {
+  const w = day.wave;
+  if (!w) return '';
+  const maxH = Math.max(w.outer, 0.3);
+  const scale = 100 / maxH; // px per metre, capped visually
+  const nearPx = Math.max(10, w.nearshore * scale);
+  const midPx = Math.max(10, w.mid * scale);
+  const outerPx = Math.max(10, w.outer * scale);
+  return `
+    <div class="wave-block">
+      <div class="wave-visual">
+        <div class="wave-surfer">&#127940;</div>
+        <div class="wave-bar-col">
+          <div class="wave-bar-label">${w.nearshore_label}<br>${w.nearshore.toFixed(1)}m</div>
+          <div class="wave-bar" style="height:${nearPx}px; background:var(--blue-200);"></div>
+          <div class="wave-bar-dist">close in*</div>
+        </div>
+        <div class="wave-bar-col">
+          <div class="wave-bar-label">${w.mid_label}<br>${w.mid.toFixed(1)}m</div>
+          <div class="wave-bar" style="height:${midPx}px; background:var(--blue-500);"></div>
+          <div class="wave-bar-dist">mid lineup*</div>
+        </div>
+        <div class="wave-bar-col">
+          <div class="wave-bar-label">${w.outer_label}<br>${w.outer.toFixed(1)}m</div>
+          <div class="wave-bar" style="height:${outerPx}px; background:var(--blue-700);"></div>
+          <div class="wave-bar-dist">the break*</div>
+        </div>
+      </div>
+      <div class="wave-footer">Swell ${day.peak.sh.toFixed(1)}m &middot; ${day.peak.sp}s period &middot; Waves get bigger further out as they jack up over shallower sand</div>
+      <div class="wave-caveat">*Rough zones, not measured distances. This spot's real sandbar shape is unverified, see Sources below.</div>
+    </div>`;
+}
+
+function renderChart(day, now) {
+  const hours = day.hourly;
+  const maxBar = 70;
+  const isToday = day.date === now.date;
+  const bars = hours.map(h => {
+    const height = Math.max(2, (h.score / 100) * maxBar);
+    const isPast = isToday && h.hour < Math.floor(now.hour);
+    let opacity = h.in_window ? 1 : 0.2;
+    if (isPast) opacity = h.in_window ? 0.45 : 0.15;
+    const outline = h.in_tide ? 'border:1.5px solid var(--blue-500);' : (h.is_peak ? 'border:1.5px solid var(--gray-900);' : '');
+    return `<div class="bar-col"><div class="bar" style="height:${height}px; background:${scoreColor(h.score)}; opacity:${opacity}; ${outline}"></div></div>`;
+  }).join('');
+
+  const pct = h => ((h + 0.5) / 24) * 100;
+  const tide = day.tide;
+  let tideTick = '';
+  if (tide) {
+    const tideHour = (tide.surf_start_h + tide.surf_end_h) / 2;
+    tideTick = `<div class="tide-tick" style="left:${pct(tideHour)}%">&#9650;<br>${tide.high_tide}</div>`;
+  }
+  let nowLine = '';
+  if (isToday) {
+    nowLine = `<div class="now-line" style="left:${pct(now.hour)}%"></div><div class="now-label" style="left:${pct(now.hour)}%">now</div>`;
+  }
+
+  return `
+    <div class="chart-block">
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--success-500);"></span>Excellent</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--warning-500);"></span>Good</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--gray-400);"></span>Marginal</span>
+        <span class="legend-item"><span class="legend-outline"></span>Your tide window</span>
+      </div>
+      <div class="chart-bars-wrap">
+        ${nowLine}
+        <div class="chart-bars">${bars}</div>
+      </div>
+      <div class="chart-hours">
+        <span>12AM</span><span>3AM</span><span>6AM</span><span>9AM</span><span>12PM</span><span>3PM</span><span>6PM</span><span>9PM</span>
+      </div>
+      <div class="tide-row">${tideTick}</div>
+      <div class="chart-footer">Faded bars = outside your surf hours &middot; Outlined bars = best tide window (1.5h before &rarr; 30min after high tide${tide ? ' at ' + tide.high_tide : ''})</div>
+    </div>`;
+}
+
+function renderDayCard(day, now) {
+  const isOpen = openCards.has(day.date);
+  const label = dayLabel(day, now);
+  const isToday = day.date === now.date;
+  const windowClosed = isToday && now.hour >= day.win_end;
+  const notYetOpen = isToday && now.hour < day.win_start;
+  const isChop = !day.peak || day.peak.sp < 8;
+  const tagHtml = day.peak
+    ? (isChop
+        ? `<span class="badge tag-chop">&#12336; Wind chop (${day.peak.sp}s)</span>`
+        : `<span class="badge tag-swell">&#127754; Swell (${day.peak.sp}s)</span>`)
+    : '';
+  const tide = day.tide;
+  let summary = day.peak
+    ? `${day.peak.sh.toFixed(1)}m &middot; ${fmtKmh(day.peak.ws)} km/h wind${tide ? ` &middot; HT ${tide.high_tide} &rarr; surf ${tide.surf_start}-${tide.surf_end}` : ''}`
+    : 'No data in surf window';
+  if (windowClosed) summary += ' &middot; Window closed for today';
+  else if (notYetOpen) summary += ` &middot; Opens ${formatHour(day.win_start)}`;
+
+  let badgeText = CALL_LABELS[day.call] || day.call;
+  let badgeClass = callClass(day.call);
+  if (windowClosed) { badgeText = 'Closed for today'; badgeClass = 'call-skip'; }
+
+  return `
+    <div class="day-card ${isOpen ? 'open' : ''}" data-date="${day.date}">
+      <div class="day-card-head" data-toggle="${day.date}">
+        <span class="pip ${pipClass(day.call)}"></span>
+        <div class="day-info">
+          <div class="day-row1">
+            <span class="day-name">${label}</span>
+            ${tagHtml}
+          </div>
+          <div class="day-summary">${summary}</div>
+        </div>
+        <div class="day-right">
+          <span class="badge badge-call ${badgeClass}">${badgeText}</span>
+          <span class="chevron">&#9662;</span>
+        </div>
+      </div>
+      <div class="day-detail">
+        ${renderStatTiles(day)}
+        ${renderWaveVisual(day)}
+        ${renderChart(day, now)}
+      </div>
+    </div>`;
+}
+
+function render() {
+  const now = nowInLagos();
+  const days = DATA[currentSpot];
+  const isLighthouse = currentSpot === 'lighthouse';
+
+  document.getElementById('spotTitle').textContent = isLighthouse ? 'Lighthouse' : 'Takwa Bay';
+  document.getElementById('spotSubtitle').innerHTML = `Lagos &middot; 7-day forecast&nbsp;&middot;&nbsp;${formatDateLabel(now)}&nbsp;&middot;&nbsp;now ${formatClock(now)}`;
+  document.getElementById('lighthouseNote').style.display = isLighthouse ? 'block' : 'none';
+  document.querySelectorAll('.spot-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.spot === currentSpot);
+  });
+
+  renderAlertBanner(days, now);
+
+  const list = document.getElementById('dayList');
+  list.innerHTML = days.map(d => renderDayCard(d, now)).join('');
+
+  list.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => {
+      const date = el.dataset.toggle;
+      if (openCards.has(date)) openCards.delete(date);
+      else openCards.add(date);
+      render();
+    });
+  });
+}
+
+document.querySelectorAll('.spot-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentSpot = btn.dataset.spot;
+    render();
+  });
+});
+
+render();
+setInterval(render, 60000);
+</script>
+</body>
+</html>
