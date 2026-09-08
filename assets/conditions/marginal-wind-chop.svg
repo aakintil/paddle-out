@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Marginal — wind chop</title>
+  <desc id="desc">Broken slate-blue wave fragments collide under an unsettled wind.</desc>
+  <defs><filter id="rough"><feTurbulence baseFrequency=".025 .09" numOctaves="2" seed="17" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".5" numOctaves="3" seed="8"/><feBlend in="SourceGraphic" mode="multiply"/></filter></defs>
+  <rect width="600" height="600" fill="#CBD4D4"/>
+  <path d="M-34 139c61-35 104-37 148-10 46 29 89 27 136-3 48-31 91-24 134 12 39 32 82 29 127 0 45-30 85-27 125 1v497H-34Z" fill="#78949D"/>
+  <path d="M-34 254c49-45 91-47 139-3 50 45 91 39 135-8 45-47 88-45 132 5 38 43 78 43 120 3 47-45 91-42 144 3v382H-34Z" fill="#526F7A" opacity=".93"/>
+  <path d="M-40 391c53-50 99-47 144 4 42 48 88 50 134 5 48-48 91-48 139 1 43 43 86 43 130-2 44-46 88-49 139-5v242H-40Z" fill="#334F5B" opacity=".93"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)">
+    <path d="M-12 177c55-42 100-40 141 2 39 39 77 43 118 5 46-43 91-42 134 2 39 40 79 42 122 5 47-41 89-41 132-3" stroke="#F0F1EA" stroke-width="14"/>
+    <path d="M-11 302c44-49 87-51 131-3 42 46 85 51 130 8 47-45 90-48 135-2 42 43 83 48 128 7 43-39 84-41 128-8" stroke="#B9C8C8" stroke-width="12"/>
+    <path d="M-7 443c42-48 83-49 125-2 43 48 87 51 132 7 46-45 89-46 134-1 43 44 85 47 128 4 41-41 82-43 127-7" stroke="#819DA2" stroke-width="14"/>
+  </g>
+  <g fill="none" stroke="#243F49" stroke-width="5" stroke-linecap="round" opacity=".68"><path d="m30 225 61-25M171 234l49-20M307 225l67-27M465 229l55-21M68 365l55-22M229 374l73-28M404 363l61-23M23 519l69-27M190 524l57-21M338 520l73-29M508 524l55-21"/></g>
+  <path d="M0 561c57-24 105-17 156 2 62 23 112 20 168-4 67-29 126-27 182-5 36 14 67 15 94 7v39H0Z" fill="#223E48"/>
+  <rect width="600" height="600" fill="#21383D" opacity=".055" filter="url(#grain)"/>
+</svg>

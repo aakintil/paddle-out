@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Skip — stormy</title>
+  <desc id="desc">Hard rain crosses near-black water beneath one thin line of horizon.</desc>
+  <defs><linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1D292E"/><stop offset="1" stop-color="#081B20"/></linearGradient><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".46" numOctaves="3" seed="21" result="n"/><feColorMatrix in="n" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .1 0"/><feBlend in="SourceGraphic" mode="screen"/></filter></defs>
+  <rect width="600" height="600" fill="url(#night)"/>
+  <path d="M0 269c90-8 180 5 274-1 113-8 216 4 326-2v334H0Z" fill="#0A2228"/>
+  <path d="M0 267c104-4 190 4 293 0 105-4 205 4 307-1" fill="none" stroke="#D7DFD8" stroke-width="5"/>
+  <g stroke="#73868A" stroke-linecap="round" opacity=".66">
+    <path d="M50-18-43 127M147-20 28 166M243-14 104 203M346-18 188 228M451-16 278 253M556-19 368 273M646 14 466 295" stroke-width="8"/>
+    <path d="m91 198-120 188m226-203L60 397m246-230L153 406m265-250L242 430m286-288L335 445m300-258L429 508" stroke-width="6"/>
+    <path d="M103 378-30 586m259-231L70 604m285-264L198 585m287-263L320 580m289-279L442 563m243-186L541 602" stroke-width="9"/>
+  </g>
+  <g stroke="#AEBBBA" stroke-width="3" stroke-linecap="round" opacity=".42"><path d="M23 38-25 113M205 31l-62 96M393 24l-75 117M574 31l-82 128M109 256 35 372M292 249 203 388M478 239 373 402M575 370 459 550M383 408 268 588M186 416 79 583"/></g>
+  <g fill="none" stroke="#29434A" stroke-linecap="round"><path d="M17 354c59-18 114-15 172 3M240 348c77-21 145-15 213 4M482 350c39-8 72-7 104 2" stroke-width="9"/><path d="M-4 474c88-24 164-17 233 5M302 467c96-25 183-13 283 7" stroke-width="12"/></g>
+  <path d="M0 552c70-20 128 15 197-3 76-21 136 17 207-4 70-21 127 11 196-3v58H0Z" fill="#06171B"/>
+  <rect width="600" height="600" fill="#8EA1A0" opacity=".1" filter="url(#grain)"/>
+</svg>

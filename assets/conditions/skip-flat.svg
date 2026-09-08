@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Skip — flat</title>
+  <desc id="desc">A lone surfboard lies on pale sand beside an empty, perfectly still sea.</desc>
+  <defs><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".6" numOctaves="3" seed="14" result="n"/><feColorMatrix in="n" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .12 0"/><feBlend in="SourceGraphic" mode="multiply"/></filter><filter id="wobble"><feTurbulence baseFrequency=".02" numOctaves="1" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter></defs>
+  <rect width="600" height="600" fill="#EFE5CF"/>
+  <path d="M0 0h600v206c-85 3-170-2-255 1-119 4-224-4-345 0Z" fill="#F6F2E7"/>
+  <path d="M0 205c111 5 196-4 297 0 104 5 195-3 303 1v77c-103-5-189 3-296 0-105-3-194 3-304-1Z" fill="#A9BFB8"/>
+  <path d="M0 282c101 4 194-3 294 0 110 4 201-3 306 1" fill="none" stroke="#7D9993" stroke-width="4"/>
+  <g transform="rotate(-12 311 422)" filter="url(#wobble)">
+    <path d="M124 421c46-47 108-68 189-67 84 1 145 25 176 69-35 42-97 62-181 59-80-2-141-22-184-61Z" fill="#E5DABE" stroke="#4F5E59" stroke-width="8"/>
+    <path d="M165 422c84-12 181-10 279 2" fill="none" stroke="#B67D47" stroke-width="5" stroke-linecap="round"/>
+    <path d="M309 360c-6 39-5 79 2 117" fill="none" stroke="#F6EFD9" stroke-width="4"/>
+    <path d="m452 423 24-18 3 38Z" fill="#4F5E59"/>
+  </g>
+  <path d="M135 505c95 24 252 26 366-4" fill="none" stroke="#D9C9A7" stroke-width="10" stroke-linecap="round" opacity=".68"/>
+  <g fill="#C4AF88" opacity=".52"><circle cx="52" cy="370" r="2"/><circle cx="93" cy="537" r="3"/><circle cx="194" cy="313" r="2"/><circle cx="397" cy="535" r="2"/><circle cx="527" cy="361" r="3"/><circle cx="559" cy="493" r="2"/><path d="m72 459 6-3m450 69 7-4M366 327l5-2M32 579l6-2" stroke="#BCA780" stroke-width="3" stroke-linecap="round"/></g>
+  <rect width="600" height="600" fill="#725F43" opacity=".1" filter="url(#grain)"/>
+</svg>
