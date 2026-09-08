@@ -33,8 +33,9 @@ html, body {
   margin: 0 -28px; overflow: hidden; position: relative;
   transition: opacity 0.2s ease;
 }
-.illus-zone svg { width: 100%; height: 100%; display: block; }
-.illus-zone img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.illus-art { position: absolute; inset: 0; }
+.illus-art svg { width: 100%; height: 100%; display: block; }
+.illus-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .illus-loading {
   width: 100%; height: 100%; background: #f5f0e8;
   display: flex; align-items: center; justify-content: center;
@@ -42,23 +43,31 @@ html, body {
   letter-spacing: 0.08em; text-transform: uppercase;
 }
 
-.hero { flex-shrink: 0; padding: 16px 0 0; }
+/* Hero text sits on top of the illustration, anchored to its bottom edge.
+   A dark scrim (independent of whatever the art's own colors are) keeps it
+   legible whether the illustration underneath is pale cream or near-black. */
+.hero-overlay {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 60px 28px 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.32) 45%, rgba(0,0,0,0) 100%);
+}
 .hero-verdict {
   font-size: clamp(48px, 13vw, 68px);
   font-weight: 800; line-height: 0.95;
-  letter-spacing: -0.03em; color: #0a0a0a;
+  letter-spacing: -0.03em; color: #fff;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.2);
   transition: opacity 0.25s;
 }
-.hero-verdict.skip { color: #bbb; }
+.hero-verdict.skip { color: rgba(255,255,255,0.7); }
 
 .hero-sub {
-  font-size: 16px; font-weight: 400; color: #666;
+  font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.85);
   line-height: 1.5; margin-top: 10px;
   max-width: 300px; transition: opacity 0.25s;
 }
-.hero-sub strong { font-weight: 600; color: #0a0a0a; }
-.hero-sub .go    { color: #1a6b3a; font-weight: 600; }
-.hero-sub .warn  { color: #b84400; font-weight: 500; }
+.hero-sub strong { font-weight: 600; color: #fff; }
+.hero-sub .go    { color: #a8d5a2; font-weight: 600; }
+.hero-sub .warn  { color: #ffb37a; font-weight: 500; }
 
 .divider { height: 1px; background: #f0f0f0; margin: 18px 0 0; flex-shrink: 0; }
 
@@ -183,10 +192,12 @@ html, body {
     <span class="header-spot">Takwa Bay</span>
     <span class="header-date" id="hdr-date"></span>
   </div>
-  <div class="illus-zone" id="illus-zone"></div>
-  <div class="hero">
-    <div class="hero-verdict" id="hero-verdict"></div>
-    <div class="hero-sub" id="hero-sub"></div>
+  <div class="illus-zone" id="illus-zone">
+    <div class="illus-art" id="illus-art"></div>
+    <div class="hero-overlay">
+      <div class="hero-verdict" id="hero-verdict"></div>
+      <div class="hero-sub" id="hero-sub"></div>
+    </div>
   </div>
   <div class="divider"></div>
   <div class="week" id="week"></div>
@@ -331,14 +342,14 @@ async function preloadIllustrations() {
 }
 
 function renderIllus(key) {
-  const zone = document.getElementById('illus-zone');
+  const art = document.getElementById('illus-art');
   const entry = illusCache[key] || illusCache.flat;
   if (entry.type === 'svg') {
-    zone.innerHTML = entry.markup;
-    const svg = zone.querySelector('svg');
+    art.innerHTML = entry.markup;
+    const svg = art.querySelector('svg');
     if (svg) svg.setAttribute('preserveAspectRatio', 'xMidYMid slice'); // square art, cover-fit into the landscape zone
   } else {
-    zone.innerHTML = `<img src="${entry.src}" alt="">`;
+    art.innerHTML = `<img src="${entry.src}" alt="">`;
   }
 }
 
@@ -467,7 +478,7 @@ document.getElementById('detail-panel').addEventListener('touchend', e => {
 }, {passive:true});
 
 async function init() {
-  document.getElementById('illus-zone').innerHTML = `<div class="illus-loading">${DAYS[0].day}</div>`;
+  document.getElementById('illus-art').innerHTML = `<div class="illus-loading">${DAYS[0].day}</div>`;
   renderWeek();
   renderHeroText(DAYS[0]);
   renderDetail(DAYS[0]);
