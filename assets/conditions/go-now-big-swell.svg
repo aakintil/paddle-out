@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Go now — big clean swell</title>
+  <desc id="desc">A surfer leans into a long clean green wall, drawn in loose layered ink.</desc>
+  <defs>
+    <linearGradient id="wash" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#77BDAA"/><stop offset=".56" stop-color="#168779"/><stop offset="1" stop-color="#07564F"/></linearGradient>
+    <filter id="paper" x="-8%" y="-8%" width="116%" height="116%"><feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="3" seed="22" result="noise"/><feColorMatrix in="noise" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .13 0"/><feBlend in="SourceGraphic" mode="multiply"/></filter>
+  </defs>
+  <rect width="600" height="600" fill="#F3F0E4"/>
+  <path d="M-35 303C64 325 124 310 190 266c66-44 93-121 196-143 87-18 172 19 249 99l-4 414H-31Z" fill="url(#wash)"/>
+  <path d="M191 270c77-51 116-124 208-133 72-7 143 22 201 76-56-28-115-30-161-3-49 29-62 80-105 115-57 46-130 49-209 27 22-31 42-60 66-82Z" fill="#0D665E" opacity=".62"/>
+  <path d="M-12 314c75 9 130-7 186-44 78-52 118-127 215-137 66-7 137 16 211 74-70-25-127-17-170 19-45 37-54 83-104 115-66 42-151 31-231 8-37-11-70-15-107-9Z" fill="#F5F2E7"/>
+  <path d="M57 340c46-5 81-21 119-48 68-48 115-106 190-117-52 22-79 64-114 100-48 51-102 82-195 65Z" fill="#61AE9B"/>
+  <path d="M321 306c40-12 63-48 94-69 33-23 72-30 122-17-48 4-78 19-99 42-23 26-46 62-95 71Z" fill="#FCF9EF"/>
+  <g fill="none" stroke="#F9F6EB" stroke-linecap="round"><path d="M368 158c43-14 86-11 125 7" stroke-width="7"/><path d="M421 186c42-8 82-1 117 18" stroke-width="3"/><path d="M28 473c92-42 168-37 242-4" stroke-width="11" opacity=".65"/><path d="M352 446c77-35 151-35 224-5" stroke-width="8" opacity=".45"/></g>
+  <g transform="rotate(-11 310 324)" fill="#172E2C"><circle cx="309" cy="257" r="12"/><path d="M298 270c-8 20-8 39 1 57l22-1c-1-19 4-34 15-48l-12-12Z"/><path d="m302 281-45-17-4 9 45 25Zm27-5 38-38 8 7-36 43Zm-19 48-42 29 7 9 46-26Zm9-3 49 15-3 11-52-12Z"/></g>
+  <path d="M250 363c59 8 112-3 161-31" fill="none" stroke="#E9D7A7" stroke-width="11" stroke-linecap="round"/>
+  <path d="M0 504c75-31 134-28 205-5 69 22 126 20 192-8 72-30 140-34 203-13v122H0Z" fill="#07544F"/>
+  <rect width="600" height="600" fill="#355D53" opacity=".18" filter="url(#paper)"/>
+</svg>

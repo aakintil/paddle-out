@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Go now — playful study</title>
+  <desc id="desc">A loose black-ink surfer glides across one friendly green wave.</desc>
+  <rect width="600" height="600" fill="#F3F1E9"/>
+  <path d="M-30 385c84 15 140-5 191-60 48-52 78-126 167-145 95-20 184 29 282 154-65-35-121-39-166-9-48 33-65 97-126 124-70 32-139 3-204-9-49-9-95-1-144 24Z" fill="#73B3A4" stroke="#17201E" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M149 331c54-40 83-104 157-126 58-17 119-3 171 36-56-17-101-4-134 31-29 31-42 65-82 80-34 13-72 6-112-21Z" fill="#F3F1E9" stroke="#17201E" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M0 471c77-31 143-29 211-5 73 26 128 23 194-4 70-29 134-29 195-7v145H0Z" fill="#347A72"/>
+  <path d="M30 520c62-22 116-20 169 1M400 503c58-20 109-18 165 3" fill="none" stroke="#C7DDD5" stroke-width="8" stroke-linecap="round"/>
+  <g fill="none" stroke="#17201E" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M296 318c10-30 27-48 50-54"/>
+    <path d="m317 303-40-20"/>
+    <path d="m341 272 34-38"/>
+    <path d="m302 326-38 37"/>
+    <path d="m309 327 48 30"/>
+  </g>
+  <circle cx="347" cy="250" r="15" fill="#17201E"/>
+  <path d="M299 294c12-23 37-31 57-17 17 12 22 33 12 63l-65-7c-10-15-12-28-4-39Z" fill="#17201E"/>
+  <path d="M241 374c54 10 107 3 159-21" fill="none" stroke="#E49A42" stroke-width="12" stroke-linecap="round"/>
+  <path d="M450 255c12-17 25-16 25-2 0 10-8 18-23 24 5-9 4-16-2-22Zm35 22c16-8 27-4 22 7-4 9-15 12-31 9 6-5 9-10 9-16Z" fill="#17201E"/>
+</svg>

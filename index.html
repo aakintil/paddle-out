@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Takwa Bay</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  background: #fff; color: #0a0a0a;
+}
+
+.screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 0 28px;
+  overflow: hidden;
+}
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 52px; padding-bottom: 4px; flex-shrink: 0;
+}
+.header-spot { font-size: 13px; font-weight: 500; color: #999; }
+.header-date { font-size: 13px; color: #bbb; }
+
+.illus-zone {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 -28px; overflow: hidden; position: relative;
+  transition: opacity 0.2s ease;
+}
+.illus-zone svg { width: 100%; height: 100%; display: block; }
+.illus-zone img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.illus-loading {
+  width: 100%; height: 100%; background: #f5f0e8;
+  display: flex; align-items: center; justify-content: center;
+  color: #bbb; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+.hero { flex-shrink: 0; padding: 16px 0 0; }
+.hero-verdict {
+  font-size: clamp(48px, 13vw, 68px);
+  font-weight: 800; line-height: 0.95;
+  letter-spacing: -0.03em; color: #0a0a0a;
+  transition: opacity 0.25s;
+}
+.hero-verdict.skip { color: #bbb; }
+
+.hero-sub {
+  font-size: 16px; font-weight: 400; color: #666;
+  line-height: 1.5; margin-top: 10px;
+  max-width: 300px; transition: opacity 0.25s;
+}
+.hero-sub strong { font-weight: 600; color: #0a0a0a; }
+.hero-sub .go    { color: #1a6b3a; font-weight: 600; }
+.hero-sub .warn  { color: #b84400; font-weight: 500; }
+
+.divider { height: 1px; background: #f0f0f0; margin: 18px 0 0; flex-shrink: 0; }
+
+/* WEEK STRIP */
+.week {
+  flex-shrink: 0;
+  display: flex; justify-content: space-between;
+  padding: 14px 0 0;
+}
+.day-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: none; border: none; cursor: pointer;
+  padding: 4px 8px; border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+.day-label {
+  font-size: 11px; font-weight: 500; color: #ccc;
+  transition: color 0.2s, font-weight 0.2s;
+  letter-spacing: 0.02em;
+}
+.day-btn.active .day-label { color: #0a0a0a; font-weight: 700; }
+.day-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.dot-go    { background: #1a6b3a; }
+.dot-plan  { background: #c8dfc8; }
+.dot-skip  { background: #e8e8e8; }
+.day-btn.active .day-dot { transform: scale(1.5); }
+
+/* BOTTOM */
+.bottom-row {
+  flex-shrink: 0; padding: 14px 0 36px;
+  display: flex; justify-content: center;
+}
+.detail-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: #f5f5f5; border: none; cursor: pointer;
+  border-radius: 100px; padding: 10px 22px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 600; color: #555;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.detail-btn:active { background: #ebebeb; }
+.detail-btn .arrow { transition: transform 0.3s; display: inline-block; font-size: 14px; }
+.detail-btn.open .arrow { transform: rotate(180deg); }
+
+/* BACKDROP */
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 40; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.backdrop.open { opacity: 1; pointer-events: all; }
+
+/* DETAIL PANEL */
+.detail-panel {
+  position: fixed; inset: 0; top: auto;
+  background: #fff; border-radius: 24px 24px 0 0;
+  box-shadow: 0 -2px 40px rgba(0,0,0,0.10);
+  padding: 0 28px 48px; z-index: 50;
+  transform: translateY(100%);
+  transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
+  max-height: 84vh; overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.detail-panel.open { transform: translateY(0); }
+.det-handle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: #e8e8e8; margin: 12px auto 22px; cursor: pointer;
+}
+
+.det-eyebrow { font-size: 11px; color: #bbb; font-weight: 500; margin-bottom: 4px; }
+.det-headline {
+  font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
+  color: #0a0a0a; line-height: 1.15; margin-bottom: 22px;
+}
+
+/* WAVE VIZ */
+.wave-row { display: flex; align-items: flex-end; gap: 10px; height: 96px; margin-bottom: 22px; }
+.surfer-col { display: flex; align-items: flex-end; flex-shrink: 0; padding-bottom: 19px; font-size: 18px; }
+.wc { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.wc-lbl { font-size: 11px; font-weight: 600; color: #333; text-align: center; line-height: 1.2; margin-bottom: 4px; }
+.wc-m { font-size: 10px; color: #bbb; font-weight: 400; }
+.wb { width: 100%; border-radius: 6px 6px 0 0; }
+.wb-n { background: linear-gradient(180deg,#c5e3ff,#90caf9); }
+.wb-m { background: linear-gradient(180deg,#74bef8,#42a5f5); }
+.wb-o { background: linear-gradient(180deg,#3482d4,#1565c0); }
+.wc-d { font-size: 10px; color: #bbb; margin-top: 5px; text-align: center; }
+
+/* CONDITIONS STRIP */
+.cond-label { font-size: 11px; color: #bbb; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
+.strip { display: flex; gap: 3px; height: 10px; border-radius: 6px; }
+.ss { flex: 1; border-radius: 3px; }
+.strip-times { display: flex; margin-top: 5px; }
+.st { flex: 1; font-size: 9px; color: #ccc; text-align: center; font-weight: 500; }
+.st.show { color: #aaa; }
+.strip-note { font-size: 12px; color: #1a6b3a; font-weight: 600; margin-top: 8px; }
+.strip-note span { color: #88c4a0; font-weight: 400; }
+.strip-note.muted { color: #bbb; }
+
+/* STAT ROWS */
+.stat-rows { margin-top: 20px; }
+.stat-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 12px 0; border-bottom: 1px solid #f5f5f5;
+}
+.stat-row:last-child { border-bottom: none; }
+.sk { font-size: 13px; color: #aaa; }
+.sv { font-size: 14px; font-weight: 700; color: #0a0a0a; }
+.sv.go   { color: #1a6b3a; }
+.sv.warn { color: #b84400; }
+.sv.big  { color: #b84400; }
+</style>
+</head>
+<body>
+
+<div class="screen">
+  <div class="header">
+    <span class="header-spot">Takwa Bay</span>
+    <span class="header-date" id="hdr-date"></span>
+  </div>
+  <div class="illus-zone" id="illus-zone"></div>
+  <div class="hero">
+    <div class="hero-verdict" id="hero-verdict"></div>
+    <div class="hero-sub" id="hero-sub"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="week" id="week"></div>
+  <div class="bottom-row">
+    <button class="detail-btn" id="detail-btn" onclick="toggleDetail()">
+      Surf report <span class="arrow">↑</span>
+    </button>
+  </div>
+</div>
+
+<div class="backdrop" id="backdrop" onclick="closeDetail()"></div>
+
+<div class="detail-panel" id="detail-panel">
+  <div class="det-handle" onclick="closeDetail()"></div>
+  <div id="det-content"></div>
+</div>
+
+<script>
+// ── TODAY = Tue 9 Sept 2026, forecast runs 7 days forward ──
+// Live data: 1.8m 13s south swell, SW cross-shore wind ~15mph → too big/cross-shore for Takwa today
+// Rest of week estimated from semi-diurnal tide progression + typical late-wet-season Lagos pattern
+
+const DAYS = [
+  {
+    day:'Tue', date:'Tue 9 Sep',
+    call:'SKIP',
+    verdict:'Too big today.',
+    sub:'1.8m swell sounds good but it\'s <span class="warn">too large for Takwa</span> and the wind is cross-shore all day. Skip it — Lighthouse might handle it better.',
+    detailHead:'Big swell, wrong wind.',
+    swell:{type:'Groundswell',period:13,height:1.8,wind:15.2,condition:'Choppy'},
+    tide:{ht:'14:08',window:'12:38–14:38',start:12.63,end:14.63},
+    wave:{near:{label:'Waist',m:'0.8m',h:40},mid:{label:'Head',m:'1.4m',h:76},outer:{label:'2× overhead',m:'2.4m',h:96}},
+    scores:{7:38,8:38,9:40,10:40,11:40,12:42,13:42,14:40,15:38,16:36,17:32,18:28},
+    illus:'too_big'
+  },
+  {
+    day:'Wed', date:'Wed 10 Sep',
+    call:'WORTH PLANNING',
+    verdict:'Maybe.',
+    sub:'Swell drops to a more manageable size. <span class="go">Get there by 13:00</span> — tide window opens at 13:03 as the swell cleans up.',
+    detailHead:'Swell settling down.',
+    swell:{type:'Groundswell',period:11,height:1.2,wind:11.0,condition:'Clean'},
+    tide:{ht:'14:33',window:'13:03–15:03',start:13.05,end:15.05},
+    wave:{near:{label:'Knee',m:'0.5m',h:30},mid:{label:'Chest',m:'0.9m',h:58},outer:{label:'Head',m:'1.2m',h:80}},
+    scores:{7:50,8:52,9:54,10:54,11:54,12:55,13:60,14:60,15:55,16:48,17:40,18:32},
+    illus:'go_clean'
+  },
+  {
+    day:'Thu', date:'Thu 11 Sep',
+    call:'GO NOW',
+    verdict:'Go surf.',
+    sub:'<span class="go">Best day of the week.</span> Swell at 1.0m with a long 11s period. Light wind, clean faces. Be at Takwa by 13:30.',
+    detailHead:'Clean, organised swell.',
+    swell:{type:'Groundswell',period:11,height:1.0,wind:8.0,condition:'Clean'},
+    tide:{ht:'15:08',window:'13:38–15:38',start:13.63,end:15.63},
+    wave:{near:{label:'Knee',m:'0.4m',h:26},mid:{label:'Waist',m:'0.7m',h:48},outer:{label:'Chest',m:'1.0m',h:68}},
+    scores:{7:55,8:56,9:58,10:58,11:60,12:62,13:65,14:65,15:62,16:55,17:44,18:34},
+    illus:'go_big'
+  },
+  {
+    day:'Fri', date:'Fri 12 Sep',
+    call:'WORTH PLANNING',
+    verdict:'Maybe.',
+    sub:'Swell drops to waist high. Okay session if you can make it out in the afternoon — <span class="warn">tide window runs late, 14:08 to 16:08.</span>',
+    detailHead:'Smaller but still surfable.',
+    swell:{type:'Groundswell',period:9,height:0.85,wind:12.5,condition:'Clean'},
+    tide:{ht:'15:38',window:'14:08–16:08',start:14.13,end:16.13},
+    wave:{near:{label:'Ankle',m:'0.3m',h:18},mid:{label:'Knee',m:'0.6m',h:38},outer:{label:'Waist',m:'0.9m',h:58}},
+    scores:{7:48,8:48,9:50,10:50,11:52,12:52,13:54,14:55,15:55,16:50,17:42,18:32},
+    illus:'maybe'
+  },
+  {
+    day:'Sat', date:'Sat 13 Sep',
+    call:'WORTH PLANNING',
+    verdict:'Maybe.',
+    sub:'Decent weekend session if you go early. <span class="warn">Wind picks up through the day</span> — morning is your best shot before it gets choppy.',
+    detailHead:'Morning is the window.',
+    swell:{type:'Groundswell',period:8,height:0.9,wind:14.0,condition:'Clean'},
+    tide:{ht:'16:13',window:'14:43–16:43',start:14.72,end:16.72},
+    wave:{near:{label:'Ankle',m:'0.4m',h:22},mid:{label:'Knee',m:'0.6m',h:40},outer:{label:'Waist',m:'0.9m',h:58}},
+    scores:{7:58,8:58,9:58,10:56,11:54,12:52,13:50,14:50,15:50,16:46,17:40,18:32},
+    illus:'maybe'
+  },
+  {
+    day:'Sun', date:'Sun 14 Sep',
+    call:'MARGINAL',
+    verdict:'Probably not.',
+    sub:'Wind chop taking over. <span class="warn">Surface will be messy all day.</span> Only worth it if you\'re happy bouncing around in rough water.',
+    detailHead:'Choppy, not clean.',
+    swell:{type:'Wind chop',period:6.5,height:0.85,wind:19.0,condition:'Choppy'},
+    tide:{ht:'16:48',window:'15:18–17:18',start:15.3,end:17.3},
+    wave:null,
+    scores:{7:36,8:36,9:38,10:38,11:38,12:38,13:40,14:40,15:40,16:38,17:34,18:28},
+    illus:'choppy'
+  },
+  {
+    day:'Mon', date:'Mon 15 Sep',
+    call:'SKIP',
+    verdict:'Stay home.',
+    sub:'Nothing worth paddling out for. <span class="warn">Wind chop, small swell.</span> Save it for later in the week.',
+    detailHead:'Not worth it.',
+    swell:{type:'Wind chop',period:5.8,height:0.7,wind:17.0,condition:'Choppy'},
+    tide:{ht:'17:22',window:'15:52–17:52',start:15.87,end:17.87},
+    wave:null,
+    scores:{7:30,8:30,9:32,10:32,11:32,12:32,13:34,14:34,15:34,16:32,17:28,18:22},
+    illus:'flat'
+  }
+];
+
+// Real illustrations — 5 are hand-authored vector SVGs (fetched and inlined
+// so they inherit CSS opacity transitions, per the brief); "too_big" has no
+// SVG yet so it falls back to a compressed WebP raster (see assets/conditions/).
+const ILLUS_SOURCES = {
+  go_big:   { type: 'svg', src: 'assets/conditions/go-now-big-swell.svg' },
+  go_clean: { type: 'svg', src: 'assets/conditions/go-now-dawn-patrol.svg' },
+  maybe:    { type: 'svg', src: 'assets/conditions/worth-planning-small-rideable.svg' },
+  choppy:   { type: 'svg', src: 'assets/conditions/marginal-wind-chop.svg' },
+  flat:     { type: 'svg', src: 'assets/conditions/skip-flat.svg' },
+  too_big:  { type: 'img', src: 'assets/conditions/too-big-oversized-swell.webp' },
+};
+
+const illusCache = {};
+
+// Preload everything up front so day-switching never waits on the network —
+// SVGs are fetched as text (tiny, ~2KB each); the raster gets its browser
+// image-cache warmed via a throwaway Image().
+async function preloadIllustrations() {
+  await Promise.all(Object.entries(ILLUS_SOURCES).map(async ([key, { type, src }]) => {
+    if (type === 'svg') {
+      const res = await fetch(src);
+      illusCache[key] = { type, markup: await res.text() };
+    } else {
+      await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = resolve;
+        img.src = src;
+      });
+      illusCache[key] = { type, src };
+    }
+  }));
+}
+
+function renderIllus(key) {
+  const zone = document.getElementById('illus-zone');
+  const entry = illusCache[key] || illusCache.flat;
+  if (entry.type === 'svg') {
+    zone.innerHTML = entry.markup;
+    const svg = zone.querySelector('svg');
+    if (svg) svg.setAttribute('preserveAspectRatio', 'xMidYMid slice'); // square art, cover-fit into the landscape zone
+  } else {
+    zone.innerHTML = `<img src="${entry.src}" alt="">`;
+  }
+}
+
+const SHOW_HRS = [7,8,9,10,11,12,13,14,15,16,17,18];
+const LABEL_HRS = new Set([7,9,11,13,15,17]);
+
+let currentIdx = 0;
+let detailOpen = false;
+
+function dotClass(call) {
+  return call === 'GO NOW' ? 'dot-go' : call === 'WORTH PLANNING' ? 'dot-plan' : 'dot-skip';
+}
+function stripColor(h, sc, tS, tE) {
+  if (tS && h >= Math.floor(tS) && h < Math.ceil(tE)) return '#1a6b3a';
+  if (sc >= 58) return '#a8d5a2';
+  if (sc >= 42) return '#d4ead2';
+  return '#e8e8e8';
+}
+
+function renderWeek() {
+  document.getElementById('week').innerHTML = DAYS.map((d, i) => `
+    <button class="day-btn${i===currentIdx?' active':''}" onclick="selectDay(${i})">
+      <span class="day-label">${d.day}</span>
+      <div class="day-dot ${dotClass(d.call)}"></div>
+    </button>`).join('');
+}
+
+function renderHeroText(d) {
+  document.getElementById('hdr-date').textContent = d.date;
+  const vEl = document.getElementById('hero-verdict');
+  vEl.textContent = d.verdict;
+  vEl.className = 'hero-verdict' + (d.call === 'SKIP' || d.call === 'MARGINAL' ? ' skip' : '');
+  document.getElementById('hero-sub').innerHTML = d.sub;
+}
+
+function renderDetail(d) {
+  const segs = SHOW_HRS.map(h => {
+    const sc = d.scores[h] || 0;
+    return `<div class="ss" style="background:${stripColor(h,sc,d.tide?.start,d.tide?.end)};"></div>`;
+  }).join('');
+  const labels = SHOW_HRS.map(h => {
+    const show = LABEL_HRS.has(h);
+    return `<div class="st${show?' show':''}">${show?String(h).padStart(2,'0')+':00':''}</div>`;
+  }).join('');
+  const noteHTML = d.tide
+    ? `<div class="strip-note">Best: ${d.tide.window} <span>· High tide ${d.tide.ht}</span></div>`
+    : `<div class="strip-note muted">No clean window today</div>`;
+  const waveHTML = d.wave ? `
+    <div class="wave-row">
+      <div class="surfer-col">🏄</div>
+      <div class="wc">
+        <div class="wc-lbl">${d.wave.near.label}<br><span class="wc-m">${d.wave.near.m}</span></div>
+        <div class="wb wb-n" style="height:${d.wave.near.h}px;"></div>
+        <div class="wc-d">~5m out</div>
+      </div>
+      <div class="wc">
+        <div class="wc-lbl">${d.wave.mid.label}<br><span class="wc-m">${d.wave.mid.m}</span></div>
+        <div class="wb wb-m" style="height:${d.wave.mid.h}px;"></div>
+        <div class="wc-d">~15m out</div>
+      </div>
+      <div class="wc">
+        <div class="wc-lbl">${d.wave.outer.label}<br><span class="wc-m">${d.wave.outer.m}</span></div>
+        <div class="wb wb-o" style="height:${Math.min(d.wave.outer.h,96)}px;"></div>
+        <div class="wc-d">The Break</div>
+      </div>
+    </div>` : '';
+
+  const windClass = d.swell.wind > 18 ? 'warn' : '';
+  const sizeClass = d.swell.height > 1.5 ? 'big' : d.call === 'GO NOW' ? 'go' : '';
+
+  document.getElementById('det-content').innerHTML = `
+    <div class="det-eyebrow">${d.date}</div>
+    <div class="det-headline">${d.detailHead}</div>
+    ${waveHTML}
+    <div class="cond-label">Conditions</div>
+    <div class="strip">${segs}</div>
+    <div class="strip-times">${labels}</div>
+    ${noteHTML}
+    <div class="stat-rows">
+      <div class="stat-row"><span class="sk">Swell height</span><span class="sv ${sizeClass}">${d.swell.height}m</span></div>
+      <div class="stat-row"><span class="sk">Period</span><span class="sv">${d.swell.period}s — ${d.swell.type}</span></div>
+      <div class="stat-row"><span class="sk">Wind</span><span class="sv ${windClass}">${d.swell.wind} km/h — ${d.swell.condition}</span></div>
+      <div class="stat-row"><span class="sk">Water temp</span><span class="sv">28°C — board shorts</span></div>
+      <div class="stat-row"><span class="sk">High tide</span><span class="sv">${d.tide?.ht || 'Outside daylight'}</span></div>
+    </div>`;
+}
+
+function selectDay(idx) {
+  if (idx === currentIdx) return;
+  currentIdx = idx;
+  const d = DAYS[idx];
+
+  renderWeek(); // active chip updates instantly
+
+  const zone = document.getElementById('illus-zone');
+  zone.style.opacity = '0'; // fade illustration out
+  setTimeout(() => {
+    renderHeroText(d);        // verdict/sub-copy update
+    renderIllus(d.illus);     // illustration swaps while invisible
+    zone.style.opacity = '1'; // fade back in
+    renderDetail(d);          // panel content updates silently underneath
+  }, 200);
+}
+
+function toggleDetail() {
+  detailOpen ? closeDetail() : openDetail();
+}
+function openDetail() {
+  detailOpen = true;
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('backdrop').classList.add('open');
+  document.getElementById('detail-btn').classList.add('open');
+}
+function closeDetail() {
+  detailOpen = false;
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('open');
+  document.getElementById('detail-btn').classList.remove('open');
+}
+
+// touch drag on detail panel
+let touchY = 0;
+document.getElementById('detail-panel').addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, {passive:true});
+document.getElementById('detail-panel').addEventListener('touchend', e => {
+  if (e.changedTouches[0].clientY - touchY > 60) closeDetail();
+}, {passive:true});
+
+async function init() {
+  document.getElementById('illus-zone').innerHTML = `<div class="illus-loading">${DAYS[0].day}</div>`;
+  renderWeek();
+  renderHeroText(DAYS[0]);
+  renderDetail(DAYS[0]);
+  await preloadIllustrations();
+  renderIllus(DAYS[0].illus);
+}
+init();
+</script>
+</body>
+</html>

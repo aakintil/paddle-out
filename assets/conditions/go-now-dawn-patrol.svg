@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Go now — dawn patrol</title>
+  <desc id="desc">A low amber sun warms blue water before the first clean lines arrive.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#CADADA"/><stop offset=".54" stop-color="#F0C77B"/><stop offset="1" stop-color="#F7D99C"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#5C9196"/><stop offset="1" stop-color="#174D5B"/></linearGradient>
+    <filter id="wobble"><feTurbulence baseFrequency=".014 .17" numOctaves="2" seed="9" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".62" numOctaves="2" seed="13" result="n"/><feColorMatrix in="n" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .11 0"/><feBlend in="SourceGraphic" mode="multiply"/></filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#sky)"/>
+  <path d="M0 313c95-5 186 5 283 0 109-6 208 4 317-1v288H0Z" fill="url(#sea)"/>
+  <path d="M218 313c5-51 37-82 82-82 45 0 77 31 82 82Z" fill="#E99235" filter="url(#wobble)"/>
+  <path d="M0 313c100-6 188 5 291 0 105-5 203 4 309-1" fill="none" stroke="#244F58" stroke-width="5"/>
+  <g fill="none" stroke-linecap="round" filter="url(#wobble)"><path d="M265 337h75" stroke="#F4B750" stroke-width="14"/><path d="M235 365h130" stroke="#ECB058" stroke-width="8"/><path d="M273 392h66" stroke="#FFD887" stroke-width="13"/><path d="M213 424h177" stroke="#D89D49" stroke-width="7"/><path d="M250 457h104" stroke="#F5CB73" stroke-width="10"/><path d="M278 497h57" stroke="#F8D98E" stroke-width="7"/></g>
+  <g fill="none" stroke="#AAC2BA" stroke-linecap="round" opacity=".66"><path d="M21 354c55-4 104-2 151 4M418 351c51 4 106 2 160-3M17 407c60 4 108 1 157-4M412 398c60-3 110-1 169 5M26 480c73-6 128-2 180 5M393 475c65 5 126 2 184-3M12 551c96-7 181-3 264 3M356 548c80 6 154 2 226-3" stroke-width="4"/></g>
+  <g fill="#36585A" opacity=".58"><path d="M75 170q17-13 34 0-17-7-34 0Z"/><path d="M439 128q14-11 29 0-15-5-29 0Z"/><path d="M481 218q10-8 21 0-11-4-21 0Z"/></g>
+  <path d="M82 283c17-3 36-3 54 0M465 275c24-3 42-2 60 1" stroke="#9C7E54" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+  <rect width="600" height="600" fill="#53675E" opacity=".13" filter="url(#grain)"/>
+</svg>

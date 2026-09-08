@@ -2,3 +2,8 @@
 .DS_Store
 node_modules/
 *.log
+
+# Raw illustration source PNGs (2.5-3.6MB each, ~33MB total) — not used
+# directly by the app (SVG versions + one compressed WebP are), kept locally
+# for reference/re-export instead of bloating repo history.
+assets/conditions/raster/*.png
