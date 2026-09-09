@@ -1,25 +1,8 @@
 {
-  "generatedAt": "2026-09-09T15:52:15.330Z",
-  "tideFetchedAt": "2026-09-08T21:26:05.282Z",
+  "generatedAt": "2026-09-09T19:02:55.963Z",
+  "tideFetchedAt": "2026-09-09T19:02:55.477Z",
   "_tideCache": {
-    "2026-09-08": [
-      {
-        "decHour": 21.4,
-        "type": "Low",
-        "heightM": -0.532
-      }
-    ],
     "2026-09-09": [
-      {
-        "decHour": 4.15,
-        "type": "High",
-        "heightM": 0.445
-      },
-      {
-        "decHour": 9.816666666666666,
-        "type": "Low",
-        "heightM": -0.372
-      },
       {
         "decHour": 16.1,
         "type": "High",
@@ -151,6 +134,23 @@
         "decHour": 13.6,
         "type": "Low",
         "heightM": -0.469
+      },
+      {
+        "decHour": 19.95,
+        "type": "High",
+        "heightM": 0.335
+      }
+    ],
+    "2026-09-16": [
+      {
+        "decHour": 1.6,
+        "type": "Low",
+        "heightM": -0.356
+      },
+      {
+        "decHour": 7.95,
+        "type": "High",
+        "heightM": 0.419
       }
     ]
   },
@@ -159,13 +159,13 @@
       "date": "Wed Sep 9",
       "label": "Today",
       "day": "Wed",
-      "call": "WORTH PLANNING",
-      "avg": 58,
+      "call": "GO NOW",
+      "avg": 60,
       "swell": {
         "type": "Groundswell",
         "period": 10.2,
         "height": 1.2,
-        "wind": 16,
+        "wind": 14,
         "condition": "Clean"
       },
       "tide": {
@@ -199,15 +199,15 @@
         "11": 65,
         "12": 64,
         "13": 65,
-        "14": 60,
-        "15": 57,
-        "16": 57,
-        "17": 59,
-        "18": 59
+        "14": 62,
+        "15": 59,
+        "16": 60,
+        "17": 62,
+        "18": 63
       },
       "detail": {
         "dir": "S",
-        "score": "58/100",
+        "score": "60/100",
         "temp": "29°C",
         "crowd": "Low"
       },
