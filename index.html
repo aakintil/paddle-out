@@ -3,7 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Takwa Bay</title>
+<title>Paddle Out — Takwa Bay Surf Forecast</title>
+<meta name="description" content="Should you paddle out at Takwa Bay today? A self-updating surf forecast for Lagos, built from real swell, wind, and tide data.">
+
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon-180.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Paddle Out">
+<meta property="og:title" content="Paddle Out — Takwa Bay Surf Forecast">
+<meta property="og:description" content="Should you paddle out at Takwa Bay today? A self-updating surf forecast for Lagos, built from real swell, wind, and tide data.">
+<meta property="og:image" content="https://aakintil.github.io/paddle-out/assets/social/og-image.png">
+<meta property="og:url" content="https://aakintil.github.io/paddle-out/">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Paddle Out — Takwa Bay Surf Forecast">
+<meta name="twitter:description" content="Should you paddle out at Takwa Bay today? A self-updating surf forecast for Lagos, built from real swell, wind, and tide data.">
+<meta name="twitter:image" content="https://aakintil.github.io/paddle-out/assets/social/og-image.png">
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -86,9 +104,20 @@ html, body {
 }
 .hero-verdict.skip { color: rgba(255,255,255,0.7); }
 
+.hero-tide {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 12px; padding: 6px 12px;
+  background: #2b2be5;
+  border-radius: 8px;
+  font-size: 14px; font-weight: 700; color: #fff;
+  letter-spacing: -0.01em;
+}
+.hero-tide:empty { display: none; }
+
 .hero-sub {
   font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.9);
-  line-height: 1.45; margin-top: 8px;
+  line-height: 1.45; margin-top: 12px;
   max-width: 300px; transition: opacity 0.25s;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
@@ -237,6 +266,7 @@ html, body {
     <div class="illus-art" id="illus-art"></div>
     <div class="hero-overlay">
       <div class="hero-verdict" id="hero-verdict"></div>
+      <div class="hero-tide" id="hero-tide"></div>
       <div class="hero-sub" id="hero-sub"></div>
     </div>
   </div>
@@ -269,7 +299,7 @@ const FALLBACK_DAYS = [
     sub:'1.8m swell sounds good but it\'s <span class="warn">too large for Takwa</span> and the wind is cross-shore all day. Skip it — Lighthouse might handle it better.',
     detailHead:'Big swell, wrong wind.',
     swell:{type:'Groundswell',period:13,height:1.8,wind:15.2,condition:'Choppy'},
-    tide:{ht:'14:08',window:'12:38–14:38',start:12.63,end:14.63},
+    tide:{ht:'2:08pm',window:'12:38pm – 2:38pm',start:12.63,end:14.63},
     wave:{near:{label:'Waist',m:'0.8m',h:40},mid:{label:'Head',m:'1.4m',h:76},outer:{label:'2× overhead',m:'2.4m',h:96}},
     scores:{7:38,8:38,9:40,10:40,11:40,12:42,13:42,14:40,15:38,16:36,17:32,18:28},
     illus:'too_big'
@@ -278,10 +308,10 @@ const FALLBACK_DAYS = [
     day:'Wed', date:'Wed 10 Sep',
     call:'WORTH PLANNING',
     verdict:'Maybe.',
-    sub:'Swell drops to a more manageable size. <span class="go">Get there by 13:00</span> — tide window opens at 13:03 as the swell cleans up.',
+    sub:'Swell drops to a more manageable size. <span class="go">Get there by 1:00pm</span> — tide window opens at 1:03pm as the swell cleans up.',
     detailHead:'Swell settling down.',
     swell:{type:'Groundswell',period:11,height:1.2,wind:11.0,condition:'Clean'},
-    tide:{ht:'14:33',window:'13:03–15:03',start:13.05,end:15.05},
+    tide:{ht:'2:33pm',window:'1:03pm – 3:03pm',start:13.05,end:15.05},
     wave:{near:{label:'Knee',m:'0.5m',h:30},mid:{label:'Chest',m:'0.9m',h:58},outer:{label:'Head',m:'1.2m',h:80}},
     scores:{7:50,8:52,9:54,10:54,11:54,12:55,13:60,14:60,15:55,16:48,17:40,18:32},
     illus:'go_clean'
@@ -290,10 +320,10 @@ const FALLBACK_DAYS = [
     day:'Thu', date:'Thu 11 Sep',
     call:'GO NOW',
     verdict:'Go surf.',
-    sub:'<span class="go">Best day of the week.</span> Swell at 1.0m with a long 11s period. Light wind, clean faces. Be at Takwa by 13:30.',
+    sub:'<span class="go">Best day of the week.</span> Swell at 1.0m with a long 11s period. Light wind, clean faces. Be at Takwa by 1:30pm.',
     detailHead:'Clean, organised swell.',
     swell:{type:'Groundswell',period:11,height:1.0,wind:8.0,condition:'Clean'},
-    tide:{ht:'15:08',window:'13:38–15:38',start:13.63,end:15.63},
+    tide:{ht:'3:08pm',window:'1:38pm – 3:38pm',start:13.63,end:15.63},
     wave:{near:{label:'Knee',m:'0.4m',h:26},mid:{label:'Waist',m:'0.7m',h:48},outer:{label:'Chest',m:'1.0m',h:68}},
     scores:{7:55,8:56,9:58,10:58,11:60,12:62,13:65,14:65,15:62,16:55,17:44,18:34},
     illus:'go_big'
@@ -302,10 +332,10 @@ const FALLBACK_DAYS = [
     day:'Fri', date:'Fri 12 Sep',
     call:'WORTH PLANNING',
     verdict:'Maybe.',
-    sub:'Swell drops to waist high. Okay session if you can make it out in the afternoon — <span class="warn">tide window runs late, 14:08 to 16:08.</span>',
+    sub:'Swell drops to waist high. Okay session if you can make it out in the afternoon — <span class="warn">tide window runs late, 2:08pm to 4:08pm.</span>',
     detailHead:'Smaller but still surfable.',
     swell:{type:'Groundswell',period:9,height:0.85,wind:12.5,condition:'Clean'},
-    tide:{ht:'15:38',window:'14:08–16:08',start:14.13,end:16.13},
+    tide:{ht:'3:38pm',window:'2:08pm – 4:08pm',start:14.13,end:16.13},
     wave:{near:{label:'Ankle',m:'0.3m',h:18},mid:{label:'Knee',m:'0.6m',h:38},outer:{label:'Waist',m:'0.9m',h:58}},
     scores:{7:48,8:48,9:50,10:50,11:52,12:52,13:54,14:55,15:55,16:50,17:42,18:32},
     illus:'maybe'
@@ -317,7 +347,7 @@ const FALLBACK_DAYS = [
     sub:'Decent weekend session if you go early. <span class="warn">Wind picks up through the day</span> — morning is your best shot before it gets choppy.',
     detailHead:'Morning is the window.',
     swell:{type:'Groundswell',period:8,height:0.9,wind:14.0,condition:'Clean'},
-    tide:{ht:'16:13',window:'14:43–16:43',start:14.72,end:16.72},
+    tide:{ht:'4:13pm',window:'2:43pm – 4:43pm',start:14.72,end:16.72},
     wave:{near:{label:'Ankle',m:'0.4m',h:22},mid:{label:'Knee',m:'0.6m',h:40},outer:{label:'Waist',m:'0.9m',h:58}},
     scores:{7:58,8:58,9:58,10:56,11:54,12:52,13:50,14:50,15:50,16:46,17:40,18:32},
     illus:'maybe'
@@ -329,7 +359,7 @@ const FALLBACK_DAYS = [
     sub:'Wind chop taking over. <span class="warn">Surface will be messy all day.</span> Only worth it if you\'re happy bouncing around in rough water.',
     detailHead:'Choppy, not clean.',
     swell:{type:'Wind chop',period:6.5,height:0.85,wind:19.0,condition:'Choppy'},
-    tide:{ht:'16:48',window:'15:18–17:18',start:15.3,end:17.3},
+    tide:{ht:'4:48pm',window:'3:18pm – 5:18pm',start:15.3,end:17.3},
     wave:null,
     scores:{7:36,8:36,9:38,10:38,11:38,12:38,13:40,14:40,15:40,16:38,17:34,18:28},
     illus:'choppy'
@@ -341,7 +371,7 @@ const FALLBACK_DAYS = [
     sub:'Nothing worth paddling out for. <span class="warn">Wind chop, small swell.</span> Save it for later in the week.',
     detailHead:'Not worth it.',
     swell:{type:'Wind chop',period:5.8,height:0.7,wind:17.0,condition:'Choppy'},
-    tide:{ht:'17:22',window:'15:52–17:52',start:15.87,end:17.87},
+    tide:{ht:'5:22pm',window:'3:52pm – 5:52pm',start:15.87,end:17.87},
     wave:null,
     scores:{7:30,8:30,9:32,10:32,11:32,12:32,13:34,14:34,15:34,16:32,17:28,18:22},
     illus:'flat'
@@ -385,7 +415,7 @@ function describeDay(raw) {
     case 'GO NOW':
       return {
         verdict: 'Go surf.',
-        sub: `<span class="go">${raw.avg >= 65 ? 'Best window this week.' : 'Good window today.'}</span> ${swell.height}m swell at ${swell.period}s, ${swell.wind}km/h wind. Be at Takwa by ${tide.ht}.`,
+        sub: `<span class="go">${raw.avg >= 65 ? 'Best window this week.' : 'Good window today.'}</span> ${swell.height}m swell at ${swell.period}s, ${swell.wind}km/h wind.`,
         detailHead: 'Clean, organised swell.',
       };
     case 'DAWN PATROL':
@@ -397,7 +427,7 @@ function describeDay(raw) {
     case 'WORTH PLANNING':
       return {
         verdict: 'Maybe.',
-        sub: `${swell.height}m swell, ${swell.period}s period. <span class="go">Tide window ${tide.window}</span> is your best shot today.`,
+        sub: `${swell.height}m swell, ${swell.period}s period. Small but rideable if the wind cooperates.`,
         detailHead: 'Worth checking conditions.',
       };
     case 'MARGINAL':
@@ -540,6 +570,10 @@ function renderHeroText(d) {
   const vEl = document.getElementById('hero-verdict');
   vEl.textContent = d.verdict;
   vEl.className = 'hero-verdict' + (MUTED_CALLS.has(d.call) ? ' skip' : '');
+  const tEl = document.getElementById('hero-tide');
+  tEl.textContent = (!MUTED_CALLS.has(d.call) && d.tide?.window && d.tide.window.includes('–'))
+    ? `Best window ${d.tide.window}`
+    : '';
   document.getElementById('hero-sub').innerHTML = d.sub;
 }
 

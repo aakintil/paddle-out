@@ -48,9 +48,12 @@ function decimalHour(date) {
   return date.getUTCHours() + date.getUTCMinutes() / 60;
 }
 function hhmm(decHour) {
-  const h = Math.floor(decHour);
-  const m = Math.round((decHour - h) * 60);
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  const dh = ((decHour % 24) + 24) % 24;
+  const h = Math.floor(dh);
+  const m = Math.round((dh - h) * 60);
+  const period = h < 12 ? 'am' : 'pm';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, '0')}${period}`;
 }
 function fmtDate(date, opts) {
   return date.toLocaleDateString('en-US', { timeZone: 'UTC', ...opts });
@@ -290,7 +293,7 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
       condition: windKmh >= 18 ? 'Choppy' : 'Clean',
     },
     tide: best
-      ? { ht: hhmm(best.decHour), window: `${hhmm(tideStart)}–${hhmm(tideEnd)}`, start: Math.round(tideStart * 100) / 100, end: Math.round(tideEnd * 100) / 100 }
+      ? { ht: hhmm(best.decHour), window: `${hhmm(tideStart)} – ${hhmm(tideEnd)}`, start: Math.round(tideStart * 100) / 100, end: Math.round(tideEnd * 100) / 100 }
       : { ht: '—', window: fallbackStart >= fallbackEnd ? 'No more session today' : 'No tide-timed window — general conditions shown', start: Math.round(tideStart * 100) / 100, end: Math.round(tideEnd * 100) / 100 },
     wave: outerM < 0.15 ? null : {
       near: { label: waveLabel(nearM), m: formatMeters(nearM), h: Math.round(nearM * 68) },
