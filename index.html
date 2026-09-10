@@ -19,9 +19,9 @@ html, body {
 }
 
 .screen {
-  width: 100%; height: 100%; max-width: 420px;
+  width: 100%; height: 100%; max-width: 720px;
   display: flex; flex-direction: column;
-  padding: 0 28px;
+  padding: 0 16px;
   overflow: hidden;
   background: #fff;
   position: relative;
@@ -32,27 +32,28 @@ html, body {
   .screen {
     height: 88vh; max-height: 860px;
     border-radius: 20px;
-    box-shadow: 0 4px 60px rgba(0,0,0,0.18);
   }
 }
 
 /* Header sits on top of the illustration now, not in its own white strip —
-   horizontally aligned on one baseline with the rest of the overlay. */
+   horizontally aligned on one baseline with the rest of the overlay, with
+   its own scrim (matches the bottom overlay's treatment) for legibility. */
 .header {
   position: absolute; top: 0; left: 0; right: 0; z-index: 3;
-  display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 20px 28px 0; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 16px 24px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0) 100%);
 }
 .header-right { display: flex; flex-direction: column; align-items: flex-end; }
-.header-spot { font-size: 16px; font-weight: 600; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.3); }
-.header-date { font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.85); text-shadow: 0 1px 8px rgba(0,0,0,0.3); }
+.header-spot { font-size: 16px; font-weight: 600; color: #fff; }
+.header-date { font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.85); }
 .header-updated { font-size: 10px; color: rgba(255,255,255,0.6); display: block; text-align: right; margin-top: 1px; }
 .header-updated.stale { color: #ffb37a; }
 
 .illus-zone {
   flex: 1; min-height: 0;
   display: flex; align-items: center; justify-content: center;
-  margin: 0 -28px; overflow: hidden; position: relative;
+  margin: 0 -16px; overflow: hidden; position: relative;
   transition: opacity 0.2s ease;
 }
 .illus-art { position: absolute; inset: 0; }
@@ -72,7 +73,7 @@ html, body {
    whether the illustration underneath is pale cream or near-black. */
 .hero-overlay {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-  height: 190px; padding: 0 28px 22px;
+  height: 190px; padding: 0 16px 22px;
   display: flex; flex-direction: column; justify-content: flex-end;
   background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.75) 40%, rgba(0,0,0,0.25) 75%, rgba(0,0,0,0) 100%);
 }
@@ -95,45 +96,46 @@ html, body {
 .hero-sub .go    { color: #a8d5a2; font-weight: 600; }
 .hero-sub .warn  { color: #ffb37a; font-weight: 500; }
 
-.divider { height: 1px; background: #f0f0f0; margin: 18px 0 0; flex-shrink: 0; }
-
 /* WEEK STRIP */
 .week {
   flex-shrink: 0;
   display: flex; justify-content: space-between;
-  padding: 14px 0 0;
+  padding: 18px 0 0;
 }
 .day-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
   background: none; border: none; cursor: pointer;
-  padding: 4px 6px; border-radius: 10px;
+  padding: 2px 4px; border-radius: 8px;
   -webkit-tap-highlight-color: transparent;
+  transform: scale(1);
+  transition: transform 0.15s ease;
 }
+.day-btn:hover { transform: scale(1.1); }
+.day-btn.active { transform: scale(1.4); }
 .day-label {
   font-size: 11px; font-weight: 500; color: #ccc;
   transition: color 0.2s, font-weight 0.2s;
   letter-spacing: 0.02em;
 }
-.day-btn.active .day-label { color: #0a0a0a; font-weight: 700; }
+.day-btn:hover .day-label, .day-btn.active .day-label { color: #0a0a0a; font-weight: 700; }
 .day-status {
   font-size: 9px; font-weight: 500; color: #ccc;
   transition: color 0.2s;
   white-space: nowrap;
 }
-.day-btn.active .day-status { color: #888; }
+.day-btn:hover .day-status, .day-btn.active .day-status { color: #888; }
 .day-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  margin-top: 2px;
-  transition: transform 0.2s, background 0.2s;
+  margin-top: 1px;
+  transition: background 0.2s;
 }
 .dot-go    { background: #1a6b3a; }
 .dot-plan  { background: #c8dfc8; }
 .dot-skip  { background: #e8e8e8; }
-.day-btn.active .day-dot { transform: scale(1.5); }
 
 /* BOTTOM */
 .bottom-row {
-  flex-shrink: 0; padding: 14px 0 36px;
+  flex-shrink: 0; padding: 16px 0;
   display: flex; justify-content: center;
 }
 .detail-btn {
@@ -158,18 +160,20 @@ html, body {
 }
 .backdrop.open { opacity: 1; pointer-events: all; }
 
-/* DETAIL PANEL */
+/* DETAIL PANEL — same max-width and horizontal centering as .screen, so it
+   reads as part of the same card instead of a full-viewport sheet */
 .detail-panel {
-  position: fixed; inset: 0; top: auto;
+  position: fixed; bottom: 0; left: 50%; top: auto;
+  width: 100%; max-width: 720px;
   background: #fff; border-radius: 24px 24px 0 0;
   box-shadow: 0 -2px 40px rgba(0,0,0,0.10);
-  padding: 0 28px 48px; z-index: 50;
-  transform: translateY(100%);
+  padding: 0 16px 48px; z-index: 50;
+  transform: translate(-50%, 100%);
   transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
   max-height: 84vh; overflow-y: auto;
   overscroll-behavior: contain;
 }
-.detail-panel.open { transform: translateY(0); }
+.detail-panel.open { transform: translate(-50%, 0); }
 .det-handle {
   width: 36px; height: 4px; border-radius: 2px;
   background: #e8e8e8; margin: 12px auto 22px; cursor: pointer;
@@ -236,7 +240,6 @@ html, body {
       <div class="hero-sub" id="hero-sub"></div>
     </div>
   </div>
-  <div class="divider"></div>
   <div class="week" id="week"></div>
   <div class="bottom-row">
     <button class="detail-btn" id="detail-btn" onclick="toggleDetail()">
@@ -322,7 +325,7 @@ const FALLBACK_DAYS = [
   {
     day:'Sun', date:'Sun 14 Sep',
     call:'MARGINAL',
-    verdict:'Probably not.',
+    verdict:'Iffy.',
     sub:'Wind chop taking over. <span class="warn">Surface will be messy all day.</span> Only worth it if you\'re happy bouncing around in rough water.',
     detailHead:'Choppy, not clean.',
     swell:{type:'Wind chop',period:6.5,height:0.85,wind:19.0,condition:'Choppy'},
@@ -388,7 +391,7 @@ function describeDay(raw) {
     case 'DAWN PATROL':
       return {
         verdict: 'Dawn patrol only.',
-        sub: `Good early — <span class="warn">drops off fast after that.</span> ${swell.height}m swell, best right around the morning tide before the wind fills in.`,
+        sub: `Good early — <span class="warn">fades by afternoon.</span> ${swell.height}m swell, best right at sunrise.`,
         detailHead: 'Good early, fades fast.',
       };
     case 'WORTH PLANNING':
@@ -399,8 +402,8 @@ function describeDay(raw) {
       };
     case 'MARGINAL':
       return {
-        verdict: 'Probably not.',
-        sub: `<span class="warn">Wind chop taking over</span> — ${swell.wind}km/h wind on a ${swell.height}m swell. Only worth it if you don't mind rough water.`,
+        verdict: 'Iffy.',
+        sub: `<span class="warn">Wind chop taking over</span> — ${swell.wind}km/h wind, ${swell.height}m swell. Rough if you paddle out.`,
         detailHead: 'Choppy, not clean.',
       };
     case 'TOO BIG':
