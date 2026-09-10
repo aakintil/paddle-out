@@ -25,6 +25,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1); /* premium ease-out, no linear feel */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot, for taps */
+}
 html, body {
   width: 100%; height: 100%; overflow: hidden;
   font-family: 'Inter', sans-serif;
@@ -72,8 +76,9 @@ html, body {
   flex: 1; min-height: 0;
   display: flex; align-items: center; justify-content: center;
   margin: 0 -16px; overflow: hidden; position: relative;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.35s var(--ease-smooth);
 }
+.illus-zone.switching { opacity: 0; }
 .illus-art { position: absolute; inset: 0; }
 .illus-art svg { width: 100%; height: 100%; display: block; }
 .illus-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -100,7 +105,7 @@ html, body {
   font-weight: 800; line-height: 0.95;
   letter-spacing: -0.03em; color: #fff;
   text-shadow: 0 2px 16px rgba(0,0,0,0.2);
-  transition: opacity 0.25s;
+  transition: opacity 0.35s var(--ease-smooth) 0.08s;
 }
 .hero-verdict.skip { color: rgba(255,255,255,0.7); }
 
@@ -112,47 +117,77 @@ html, body {
   border-radius: 8px;
   font-size: 14px; font-weight: 700; color: #fff;
   letter-spacing: -0.01em;
+  transition: opacity 0.35s var(--ease-smooth) 0.2s;
 }
 .hero-tide:empty { display: none; }
 
 .hero-sub {
   font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.9);
   line-height: 1.45; margin-top: 12px;
-  max-width: 300px; transition: opacity 0.25s;
+  max-width: 300px;
+  transition: opacity 0.35s var(--ease-smooth) 0.32s;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.illus-zone.switching .hero-verdict,
+.illus-zone.switching .hero-tide,
+.illus-zone.switching .hero-sub {
+  opacity: 0;
+  transition-delay: 0s; /* fade out immediately with the background; only fading in is staggered */
 }
 .hero-sub strong { font-weight: 600; color: #fff; }
 .hero-sub .go    { color: #a8d5a2; font-weight: 600; }
 .hero-sub .warn  { color: #ffb37a; font-weight: 500; }
 
-/* WEEK STRIP */
+/* WEEK STRIP — a segmented control: one gray track, one white pill that
+   slides to whichever day is active. Reads as a single interactive control
+   rather than seven separate buttons, which is what a plain text row failed
+   to communicate. */
 .week {
   flex-shrink: 0;
-  display: flex; justify-content: space-between;
   padding: 18px 0 0;
 }
+.week-track {
+  position: relative;
+  display: flex;
+  background: #f0f0f0;
+  border-radius: 14px;
+  padding: 4px;
+}
+.week-indicator {
+  position: absolute; top: 4px; bottom: 4px; left: 4px;
+  width: calc((100% - 8px) / 7);
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  transition: transform 0.4s var(--ease-spring);
+  z-index: 1;
+}
+.week-days {
+  position: relative; z-index: 2;
+  display: flex; width: 100%;
+}
 .day-btn {
+  flex: 1; min-width: 0;
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   background: none; border: none; cursor: pointer;
-  padding: 2px 4px; border-radius: 8px;
+  padding: 8px 2px 7px; border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
   transform: scale(1);
-  transition: transform 0.15s ease;
+  transition: transform 0.15s var(--ease-smooth);
 }
-.day-btn:hover { transform: scale(1.1); }
-.day-btn.active { transform: scale(1.4); }
+.day-btn:active { transform: scale(0.94); }
 .day-label {
-  font-size: 11px; font-weight: 500; color: #ccc;
-  transition: color 0.2s, font-weight 0.2s;
+  font-size: 11px; font-weight: 500; color: #999;
+  transition: color 0.25s var(--ease-smooth), font-weight 0.25s var(--ease-smooth);
   letter-spacing: 0.02em;
 }
-.day-btn:hover .day-label, .day-btn.active .day-label { color: #0a0a0a; font-weight: 700; }
+.day-btn.active .day-label { color: #0a0a0a; font-weight: 700; }
 .day-status {
-  font-size: 9px; font-weight: 500; color: #ccc;
+  font-size: 9px; font-weight: 500; color: #aaa;
   transition: color 0.2s;
   white-space: nowrap;
 }
-.day-btn:hover .day-status, .day-btn.active .day-status { color: #888; }
+.day-btn.active .day-status { color: #777; }
 .day-dot {
   width: 6px; height: 6px; border-radius: 50%;
   margin-top: 1px;
@@ -174,10 +209,11 @@ html, body {
   font-family: 'Inter', sans-serif;
   font-size: 13px; font-weight: 600; color: #555;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s;
+  transform: scale(1);
+  transition: background 0.2s var(--ease-smooth), transform 0.25s var(--ease-smooth);
 }
-.detail-btn:active { background: #ebebeb; }
-.detail-btn .arrow { transition: transform 0.3s; display: inline-block; font-size: 14px; }
+.detail-btn:active { background: #ebebeb; transform: scale(0.96); }
+.detail-btn .arrow { transition: transform 0.4s var(--ease-spring); display: inline-block; font-size: 14px; }
 .detail-btn.open .arrow { transform: rotate(180deg); }
 
 /* BACKDROP */
@@ -185,7 +221,7 @@ html, body {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.18);
   z-index: 40; opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
+  transition: opacity 0.35s var(--ease-smooth);
 }
 .backdrop.open { opacity: 1; pointer-events: all; }
 
@@ -270,7 +306,12 @@ html, body {
       <div class="hero-sub" id="hero-sub"></div>
     </div>
   </div>
-  <div class="week" id="week"></div>
+  <div class="week">
+    <div class="week-track">
+      <div class="week-indicator" id="week-indicator"></div>
+      <div class="week-days" id="week-days"></div>
+    </div>
+  </div>
   <div class="bottom-row">
     <button class="detail-btn" id="detail-btn" onclick="toggleDetail()">
       Surf report <span class="arrow">↑</span>
@@ -557,12 +598,13 @@ function stripColor(h, sc, tS, tE) {
 }
 
 function renderWeek() {
-  document.getElementById('week').innerHTML = DAYS.map((d, i) => `
+  document.getElementById('week-days').innerHTML = DAYS.map((d, i) => `
     <button class="day-btn${i===currentIdx?' active':''}" onclick="selectDay(${i})">
       <span class="day-label">${d.day}</span>
       <span class="day-status">${d.verdict.replace(/\.$/, '')}</span>
       <div class="day-dot ${dotClass(d.call)}"></div>
     </button>`).join('');
+  document.getElementById('week-indicator').style.transform = `translateX(${currentIdx * 100}%)`;
 }
 
 function renderHeroText(d) {
@@ -637,13 +679,13 @@ function selectDay(idx) {
   renderWeek(); // active chip updates instantly
 
   const zone = document.getElementById('illus-zone');
-  zone.style.opacity = '0'; // fade illustration out
+  zone.classList.add('switching'); // fade illustration + hero text out together
   setTimeout(() => {
     renderHeroText(d);        // verdict/sub-copy update
     renderIllus(d.illus);     // illustration swaps while invisible
-    zone.style.opacity = '1'; // fade back in
+    zone.classList.remove('switching'); // fade back in, text drifting up into place
     renderDetail(d);          // panel content updates silently underneath
-  }, 200);
+  }, 350);
 }
 
 function toggleDetail() {
@@ -682,6 +724,8 @@ function renderUpdatedAt() {
 
 async function init() {
   document.getElementById('illus-art').innerHTML = `<div class="illus-loading">Loading</div>`;
+  const zone = document.getElementById('illus-zone');
+  zone.classList.add('switching'); // hold hidden until the first real day is ready, then ease it in
   await loadForecast();
   currentIdx = 0;
   renderWeek();
@@ -690,6 +734,7 @@ async function init() {
   renderUpdatedAt();
   await preloadIllustrations();
   renderIllus(DAYS[0].illus);
+  requestAnimationFrame(() => zone.classList.remove('switching'));
 }
 init();
 </script>
