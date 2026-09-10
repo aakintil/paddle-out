@@ -10,24 +10,44 @@
 html, body {
   width: 100%; height: 100%; overflow: hidden;
   font-family: 'Inter', sans-serif;
-  background: #fff; color: #0a0a0a;
+  background: #e8e8e8; color: #0a0a0a;
+}
+
+.page {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
 }
 
 .screen {
-  position: fixed; inset: 0;
+  width: 100%; height: 100%; max-width: 420px;
   display: flex; flex-direction: column;
   padding: 0 28px;
   overflow: hidden;
+  background: #fff;
+  position: relative;
+}
+/* On anything wider than a phone, the app reads as a centered card rather
+   than stretching edge-to-edge — page background fills the rest. */
+@media (min-width: 720px) {
+  .screen {
+    height: 88vh; max-height: 860px;
+    border-radius: 20px;
+    box-shadow: 0 4px 60px rgba(0,0,0,0.18);
+  }
 }
 
+/* Header sits on top of the illustration now, not in its own white strip —
+   horizontally aligned on one baseline with the rest of the overlay. */
 .header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding-top: 52px; padding-bottom: 4px; flex-shrink: 0;
+  position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 20px 28px 0; flex-shrink: 0;
 }
-.header-spot { font-size: 13px; font-weight: 500; color: #999; }
-.header-date { font-size: 13px; color: #bbb; }
-.header-updated { font-size: 10px; color: #ccc; display: block; text-align: right; margin-top: 1px; }
-.header-updated.stale { color: #b84400; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; }
+.header-spot { font-size: 16px; font-weight: 600; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.3); }
+.header-date { font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.85); text-shadow: 0 1px 8px rgba(0,0,0,0.3); }
+.header-updated { font-size: 10px; color: rgba(255,255,255,0.6); display: block; text-align: right; margin-top: 1px; }
+.header-updated.stale { color: #ffb37a; }
 
 .illus-zone {
   flex: 1; min-height: 0;
@@ -46,15 +66,18 @@ html, body {
 }
 
 /* Hero text sits on top of the illustration, anchored to its bottom edge.
-   A dark scrim (independent of whatever the art's own colors are) keeps it
-   legible whether the illustration underneath is pale cream or near-black. */
+   Fixed height regardless of copy length, so the illustration crop point
+   never shifts between a short verdict ("Go surf.") and a long one. A
+   strong scrim (independent of the art's own colors) keeps it legible
+   whether the illustration underneath is pale cream or near-black. */
 .hero-overlay {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-  padding: 60px 28px 20px;
-  background: linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.32) 45%, rgba(0,0,0,0) 100%);
+  height: 190px; padding: 0 28px 22px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.75) 40%, rgba(0,0,0,0.25) 75%, rgba(0,0,0,0) 100%);
 }
 .hero-verdict {
-  font-size: clamp(48px, 13vw, 68px);
+  font-size: clamp(40px, 11vw, 60px);
   font-weight: 800; line-height: 0.95;
   letter-spacing: -0.03em; color: #fff;
   text-shadow: 0 2px 16px rgba(0,0,0,0.2);
@@ -63,9 +86,10 @@ html, body {
 .hero-verdict.skip { color: rgba(255,255,255,0.7); }
 
 .hero-sub {
-  font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.85);
-  line-height: 1.5; margin-top: 10px;
+  font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.9);
+  line-height: 1.45; margin-top: 8px;
   max-width: 300px; transition: opacity 0.25s;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .hero-sub strong { font-weight: 600; color: #fff; }
 .hero-sub .go    { color: #a8d5a2; font-weight: 600; }
@@ -80,9 +104,9 @@ html, body {
   padding: 14px 0 0;
 }
 .day-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
   background: none; border: none; cursor: pointer;
-  padding: 4px 8px; border-radius: 10px;
+  padding: 4px 6px; border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
 }
 .day-label {
@@ -91,8 +115,15 @@ html, body {
   letter-spacing: 0.02em;
 }
 .day-btn.active .day-label { color: #0a0a0a; font-weight: 700; }
+.day-status {
+  font-size: 9px; font-weight: 500; color: #ccc;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+.day-btn.active .day-status { color: #888; }
 .day-dot {
   width: 6px; height: 6px; border-radius: 50%;
+  margin-top: 2px;
   transition: transform 0.2s, background 0.2s;
 }
 .dot-go    { background: #1a6b3a; }
@@ -189,10 +220,11 @@ html, body {
 </head>
 <body>
 
+<div class="page">
 <div class="screen">
   <div class="header">
     <span class="header-spot">Takwa Bay</span>
-    <span>
+    <span class="header-right">
       <span class="header-date" id="hdr-date"></span>
       <span class="header-updated" id="header-updated"></span>
     </span>
@@ -211,6 +243,7 @@ html, body {
       Surf report <span class="arrow">↑</span>
     </button>
   </div>
+</div>
 </div>
 
 <div class="backdrop" id="backdrop" onclick="closeDetail()"></div>
@@ -494,6 +527,7 @@ function renderWeek() {
   document.getElementById('week').innerHTML = DAYS.map((d, i) => `
     <button class="day-btn${i===currentIdx?' active':''}" onclick="selectDay(${i})">
       <span class="day-label">${d.day}</span>
+      <span class="day-status">${d.verdict.replace(/\.$/, '')}</span>
       <div class="day-dot ${dotClass(d.call)}"></div>
     </button>`).join('');
 }
