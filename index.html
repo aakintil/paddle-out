@@ -306,9 +306,9 @@ html, body {
   overscroll-behavior: contain;
 }
 .detail-panel.open { transform: translate(-50%, 0); }
-.det-handle {
-  width: 36px; height: 4px; border-radius: 2px;
-  background: #e8e8e8; margin: 12px auto 22px; cursor: pointer;
+.det-close-row {
+  display: flex; justify-content: center;
+  padding: 14px 0 22px;
 }
 
 .det-eyebrow { font-size: 11px; color: #bbb; font-weight: 500; margin-bottom: 4px; }
@@ -418,7 +418,9 @@ html, body {
 <div class="backdrop" id="backdrop" onclick="closeDetail()"></div>
 
 <div class="detail-panel" id="detail-panel">
-  <div class="det-handle" onclick="closeDetail()"></div>
+  <div class="det-close-row">
+    <button class="detail-btn" onclick="closeDetail()">Close <span class="arrow">↓</span></button>
+  </div>
   <div id="det-content"></div>
 </div>
 
