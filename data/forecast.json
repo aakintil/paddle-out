@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T22:58:42.745Z",
+  "generatedAt": "2026-09-22T03:10:00.572Z",
   "tideFetchedAt": "2026-09-21T17:49:22.597Z",
   "_tideCache": {
     "2026-09-21": [
@@ -161,75 +161,14 @@
   },
   "forecast": [
     {
-      "date": "Mon Sep 21",
-      "label": "Today",
-      "day": "Mon",
-      "call": "TOO BIG",
-      "avg": 60,
-      "swell": {
-        "type": "Groundswell",
-        "period": 9.9,
-        "height": 1.8,
-        "wind": 19,
-        "condition": "Choppy"
-      },
-      "tide": {
-        "ht": "1:18pm",
-        "window": "11:48am – 1:48pm",
-        "start": 11.8,
-        "end": 13.8
-      },
-      "wave": {
-        "near": {
-          "label": "Waist",
-          "m": "0.72m",
-          "h": 49
-        },
-        "mid": {
-          "label": "Head",
-          "m": "1.26m",
-          "h": 86
-        },
-        "outer": {
-          "label": "Head",
-          "m": "1.8m",
-          "h": 122
-        }
-      },
-      "scores": {
-        "7": 68,
-        "8": 69,
-        "9": 68,
-        "10": 64,
-        "11": 62,
-        "12": 59,
-        "13": 58,
-        "14": 61,
-        "15": 57,
-        "16": 57,
-        "17": 59,
-        "18": 57
-      },
-      "detail": {
-        "dir": "S",
-        "score": "60/100",
-        "temp": "28°C",
-        "crowd": "Low"
-      },
-      "rain": {
-        "beach": "Heavy",
-        "home": "Heavy"
-      }
-    },
-    {
       "date": "Tue Sep 22",
-      "label": "Tomorrow",
+      "label": "Today",
       "day": "Tue",
       "call": "WORTH PLANNING",
-      "avg": 58,
+      "avg": 59,
       "swell": {
         "type": "Groundswell",
-        "period": 9.2,
+        "period": 9.7,
         "height": 1.4,
         "wind": 16,
         "condition": "Clean"
@@ -258,22 +197,22 @@
         }
       },
       "scores": {
-        "7": 67,
+        "7": 64,
         "8": 66,
-        "9": 66,
-        "10": 65,
+        "9": 61,
+        "10": 63,
         "11": 61,
-        "12": 58,
+        "12": 59,
         "13": 59,
-        "14": 58,
-        "15": 55,
+        "14": 60,
+        "15": 58,
         "16": 58,
-        "17": 56,
-        "18": 56
+        "17": 58,
+        "18": 61
       },
       "detail": {
         "dir": "S",
-        "score": "58/100",
+        "score": "59/100",
         "temp": "26°C",
         "crowd": "Low"
       },
@@ -284,15 +223,15 @@
     },
     {
       "date": "Wed Sep 23",
-      "label": "Wednesday",
+      "label": "Tomorrow",
       "day": "Wed",
       "call": "WORTH PLANNING",
-      "avg": 53,
+      "avg": 58,
       "swell": {
         "type": "Groundswell",
-        "period": 8.6,
+        "period": 8.9,
         "height": 1.3,
-        "wind": 17,
+        "wind": 16,
         "condition": "Clean"
       },
       "tide": {
@@ -319,23 +258,23 @@
         }
       },
       "scores": {
-        "7": 68,
+        "7": 66,
         "8": 68,
-        "9": 63,
-        "10": 64,
-        "11": 61,
-        "12": 58,
-        "13": 55,
-        "14": 54,
-        "15": 51,
-        "16": 50,
-        "17": 50,
-        "18": 52
+        "9": 67,
+        "10": 66,
+        "11": 68,
+        "12": 67,
+        "13": 62,
+        "14": 57,
+        "15": 54,
+        "16": 53,
+        "17": 53,
+        "18": 53
       },
       "detail": {
         "dir": "S",
-        "score": "53/100",
-        "temp": "28°C",
+        "score": "58/100",
+        "temp": "26°C",
         "crowd": "Low"
       },
       "rain": {
@@ -347,14 +286,14 @@
       "date": "Thu Sep 24",
       "label": "Thursday",
       "day": "Thu",
-      "call": "MARGINAL",
-      "avg": 44,
+      "call": "WORTH PLANNING",
+      "avg": 45,
       "swell": {
         "type": "Groundswell",
         "period": 8.2,
-        "height": 1,
-        "wind": 17,
-        "condition": "Clean"
+        "height": 1.1,
+        "wind": 18,
+        "condition": "Choppy"
       },
       "tide": {
         "ht": "3:54pm",
@@ -365,37 +304,37 @@
       "wave": {
         "near": {
           "label": "Knee",
-          "m": "0.4m",
-          "h": 27
+          "m": "0.44m",
+          "h": 30
         },
         "mid": {
           "label": "Waist",
-          "m": "0.7m",
-          "h": 48
+          "m": "0.77m",
+          "h": 52
         },
         "outer": {
           "label": "Chest",
-          "m": "1.0m",
-          "h": 68
+          "m": "1.1m",
+          "h": 75
         }
       },
       "scores": {
         "7": 57,
-        "8": 58,
-        "9": 58,
-        "10": 58,
-        "11": 56,
-        "12": 50,
-        "13": 48,
+        "8": 57,
+        "9": 57,
+        "10": 57,
+        "11": 55,
+        "12": 51,
+        "13": 51,
         "14": 46,
-        "15": 44,
+        "15": 45,
         "16": 43,
-        "17": 44,
+        "17": 43,
         "18": 45
       },
       "detail": {
-        "dir": "SSW",
-        "score": "44/100",
+        "dir": "S",
+        "score": "45/100",
         "temp": "28°C",
         "crowd": "Low"
       },
@@ -409,10 +348,10 @@
       "label": "Friday",
       "day": "Fri",
       "call": "MARGINAL",
-      "avg": 35,
+      "avg": 36,
       "swell": {
         "type": "Wind chop",
-        "period": 7,
+        "period": 7.3,
         "height": 1,
         "wind": 19,
         "condition": "Choppy"
@@ -441,22 +380,22 @@
         }
       },
       "scores": {
-        "7": 50,
-        "8": 48,
-        "9": 45,
-        "10": 43,
-        "11": 42,
+        "7": 52,
+        "8": 52,
+        "9": 49,
+        "10": 46,
+        "11": 43,
         "12": 41,
-        "13": 39,
+        "13": 38,
         "14": 37,
         "15": 36,
-        "16": 35,
-        "17": 35,
-        "18": 36
+        "16": 36,
+        "17": 36,
+        "18": 37
       },
       "detail": {
         "dir": "SSW",
-        "score": "35/100",
+        "score": "36/100",
         "temp": "27°C",
         "crowd": "Medium"
       },
@@ -470,12 +409,12 @@
       "label": "Saturday",
       "day": "Sat",
       "call": "MARGINAL",
-      "avg": 31,
+      "avg": 32,
       "swell": {
         "type": "Wind chop",
         "period": 6.6,
-        "height": 0.9,
-        "wind": 19,
+        "height": 1,
+        "wind": 20,
         "condition": "Choppy"
       },
       "tide": {
@@ -483,67 +422,6 @@
         "window": "3:38pm – 5:38pm",
         "start": 15.63,
         "end": 17.63
-      },
-      "wave": {
-        "near": {
-          "label": "Knee",
-          "m": "0.36m",
-          "h": 24
-        },
-        "mid": {
-          "label": "Waist",
-          "m": "0.63m",
-          "h": 43
-        },
-        "outer": {
-          "label": "Chest",
-          "m": "0.9m",
-          "h": 61
-        }
-      },
-      "scores": {
-        "7": 44,
-        "8": 43,
-        "9": 40,
-        "10": 38,
-        "11": 37,
-        "12": 36,
-        "13": 34,
-        "14": 33,
-        "15": 32,
-        "16": 31,
-        "17": 31,
-        "18": 33
-      },
-      "detail": {
-        "dir": "SSW",
-        "score": "31/100",
-        "temp": "28°C",
-        "crowd": "High"
-      },
-      "rain": {
-        "beach": "Heavy",
-        "home": "Heavy"
-      }
-    },
-    {
-      "date": "Sun Sep 27",
-      "label": "Sunday",
-      "day": "Sun",
-      "call": "MARGINAL",
-      "avg": 31,
-      "swell": {
-        "type": "Wind chop",
-        "period": 5.9,
-        "height": 1,
-        "wind": 18,
-        "condition": "Choppy"
-      },
-      "tide": {
-        "ht": "5:45pm",
-        "window": "4:15pm – 6:15pm",
-        "start": 16.25,
-        "end": 18.25
       },
       "wave": {
         "near": {
@@ -563,24 +441,146 @@
         }
       },
       "scores": {
-        "7": 38,
-        "8": 37,
-        "9": 35,
-        "10": 33,
-        "11": 32,
-        "12": 31,
-        "13": 30,
-        "14": 30,
-        "15": 30,
-        "16": 30,
+        "7": 42,
+        "8": 42,
+        "9": 41,
+        "10": 40,
+        "11": 38,
+        "12": 36,
+        "13": 34,
+        "14": 33,
+        "15": 32,
+        "16": 32,
         "17": 32,
         "18": 32
       },
       "detail": {
-        "dir": "SW",
-        "score": "31/100",
+        "dir": "SSW",
+        "score": "32/100",
         "temp": "27°C",
         "crowd": "High"
+      },
+      "rain": {
+        "beach": "Heavy",
+        "home": "Heavy"
+      }
+    },
+    {
+      "date": "Sun Sep 27",
+      "label": "Sunday",
+      "day": "Sun",
+      "call": "MARGINAL",
+      "avg": 32,
+      "swell": {
+        "type": "Wind chop",
+        "period": 5.7,
+        "height": 1.1,
+        "wind": 18,
+        "condition": "Choppy"
+      },
+      "tide": {
+        "ht": "5:45pm",
+        "window": "4:15pm – 6:15pm",
+        "start": 16.25,
+        "end": 18.25
+      },
+      "wave": {
+        "near": {
+          "label": "Knee",
+          "m": "0.44m",
+          "h": 30
+        },
+        "mid": {
+          "label": "Waist",
+          "m": "0.77m",
+          "h": 52
+        },
+        "outer": {
+          "label": "Chest",
+          "m": "1.1m",
+          "h": 75
+        }
+      },
+      "scores": {
+        "7": 38,
+        "8": 39,
+        "9": 40,
+        "10": 40,
+        "11": 38,
+        "12": 34,
+        "13": 31,
+        "14": 30,
+        "15": 29,
+        "16": 29,
+        "17": 31,
+        "18": 35
+      },
+      "detail": {
+        "dir": "SW",
+        "score": "32/100",
+        "temp": "28°C",
+        "crowd": "High"
+      },
+      "rain": {
+        "beach": "Heavy",
+        "home": "Heavy"
+      }
+    },
+    {
+      "date": "Mon Sep 28",
+      "label": "Monday",
+      "day": "Mon",
+      "call": "SKIP: STORMY",
+      "avg": 0,
+      "swell": {
+        "type": "Wind chop",
+        "period": 5.9,
+        "height": 1.2,
+        "wind": 14,
+        "condition": "Clean"
+      },
+      "tide": {
+        "ht": "6:00am",
+        "window": "4:30am – 6:30am",
+        "start": 4.5,
+        "end": 6.5
+      },
+      "wave": {
+        "near": {
+          "label": "Knee",
+          "m": "0.48m",
+          "h": 33
+        },
+        "mid": {
+          "label": "Waist",
+          "m": "0.84m",
+          "h": 57
+        },
+        "outer": {
+          "label": "Head",
+          "m": "1.2m",
+          "h": 82
+        }
+      },
+      "scores": {
+        "7": 41,
+        "8": 40,
+        "9": 40,
+        "10": 38,
+        "11": 36,
+        "12": 34,
+        "13": 33,
+        "14": 33,
+        "15": 34,
+        "16": 36,
+        "17": 37,
+        "18": 39
+      },
+      "detail": {
+        "dir": "SW",
+        "score": "0/100",
+        "temp": "27°C",
+        "crowd": "Low"
       },
       "rain": {
         "beach": "Heavy",
