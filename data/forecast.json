@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T19:42:20.880Z",
+  "generatedAt": "2026-10-10T23:11:14.491Z",
   "tideFetchedAt": "2026-10-10T14:11:38.048Z",
   "_tideCache": {
     "2026-10-10": [
@@ -161,69 +161,8 @@
   },
   "forecast": [
     {
-      "date": "Sat Oct 10",
-      "label": "Today",
-      "day": "Sat",
-      "call": "GO NOW",
-      "avg": 69,
-      "swell": {
-        "type": "Groundswell",
-        "period": 12.2,
-        "height": 1.3,
-        "wind": 14,
-        "condition": "Clean"
-      },
-      "tide": {
-        "ht": "5:15pm",
-        "window": "3:45pm – 5:45pm",
-        "start": 15.75,
-        "end": 17.75
-      },
-      "wave": {
-        "near": {
-          "label": "Knee",
-          "m": "0.52m",
-          "h": 35
-        },
-        "mid": {
-          "label": "Chest",
-          "m": "0.91m",
-          "h": 62
-        },
-        "outer": {
-          "label": "Head",
-          "m": "1.3m",
-          "h": 88
-        }
-      },
-      "scores": {
-        "7": 77,
-        "8": 78,
-        "9": 77,
-        "10": 76,
-        "11": 76,
-        "12": 73,
-        "13": 71,
-        "14": 67,
-        "15": 67,
-        "16": 70,
-        "17": 70,
-        "18": 71
-      },
-      "detail": {
-        "dir": "SSW",
-        "score": "69/100",
-        "temp": "29°C",
-        "crowd": "High"
-      },
-      "rain": {
-        "beach": "Heavy",
-        "home": "Heavy"
-      }
-    },
-    {
       "date": "Sun Oct 11",
-      "label": "Tomorrow",
+      "label": "Today",
       "day": "Sun",
       "call": "GO NOW",
       "avg": 64,
@@ -284,7 +223,7 @@
     },
     {
       "date": "Mon Oct 12",
-      "label": "Monday",
+      "label": "Tomorrow",
       "day": "Mon",
       "call": "WORTH PLANNING",
       "avg": 57,
@@ -581,6 +520,67 @@
         "score": "50/100",
         "temp": "29°C",
         "crowd": "Medium"
+      },
+      "rain": {
+        "beach": "Heavy",
+        "home": "Heavy"
+      }
+    },
+    {
+      "date": "Sat Oct 17",
+      "label": "Saturday",
+      "day": "Sat",
+      "call": "GO NOW",
+      "avg": 63,
+      "swell": {
+        "type": "Groundswell",
+        "period": 11.1,
+        "height": 0.8,
+        "wind": 6,
+        "condition": "Clean"
+      },
+      "tide": {
+        "ht": "8:23am",
+        "window": "6:53am – 8:53am",
+        "start": 6.88,
+        "end": 8.88
+      },
+      "wave": {
+        "near": {
+          "label": "Ankle",
+          "m": "0.32m",
+          "h": 22
+        },
+        "mid": {
+          "label": "Waist",
+          "m": "0.56m",
+          "h": 38
+        },
+        "outer": {
+          "label": "Waist",
+          "m": "0.8m",
+          "h": 54
+        }
+      },
+      "scores": {
+        "7": 63,
+        "8": 63,
+        "9": 62,
+        "10": 60,
+        "11": 58,
+        "12": 56,
+        "13": 55,
+        "14": 55,
+        "15": 56,
+        "16": 58,
+        "17": 59,
+        "18": 61
+      },
+      "detail": {
+        "dir": "SSW",
+        "score": "63/100",
+        "temp": "29°C",
+        "crowd": "High"
       },
       "rain": {
         "beach": "Heavy",
