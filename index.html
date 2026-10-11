@@ -35,8 +35,14 @@ html, body {
   background: #e8e8e8; color: #0a0a0a;
 }
 
+/* Sized by the document (100% of html/body) rather than position: fixed —
+   mobile browsers with a collapsing toolbar (Firefox for Android) lay fixed
+   boxes out against the taller toolbar-hidden viewport, which made the app
+   taller than the visible area and let the page scroll. The backdrop and
+   detail panel live inside .page for the same reason. */
 .page {
-  position: fixed; inset: 0;
+  position: relative; width: 100%; height: 100%;
+  overflow: hidden; overflow: clip; /* clip: the parked panel adds no scroll range */
   display: flex; align-items: center; justify-content: center;
 }
 
@@ -52,7 +58,7 @@ html, body {
    than stretching edge-to-edge — page background fills the rest. */
 @media (min-width: 720px) {
   .screen {
-    height: 88vh; max-height: 860px;
+    height: 88%; max-height: 860px;
     border-radius: 20px;
   }
 }
@@ -285,7 +291,7 @@ html, body {
 
 /* BACKDROP */
 .backdrop {
-  position: fixed; inset: 0;
+  position: absolute; inset: 0;
   background: rgba(0,0,0,0.18);
   z-index: 40; opacity: 0; pointer-events: none;
   transition: opacity 0.35s var(--ease-smooth);
@@ -295,14 +301,14 @@ html, body {
 /* DETAIL PANEL — same max-width and horizontal centering as .screen, so it
    reads as part of the same card instead of a full-viewport sheet */
 .detail-panel {
-  position: fixed; bottom: 0; left: 50%; top: auto;
+  position: absolute; bottom: 0; left: 50%; top: auto;
   width: 100%; max-width: 720px;
   background: #fff; border-radius: 24px 24px 0 0;
   box-shadow: 0 -2px 40px rgba(0,0,0,0.10);
   padding: 0 16px 48px; z-index: 50;
   transform: translate(-50%, 100%);
   transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
-  max-height: 84vh; overflow-y: auto;
+  max-height: 84%; overflow-y: auto;
   overscroll-behavior: contain;
 }
 .detail-panel.open { transform: translate(-50%, 0); }
@@ -413,7 +419,6 @@ html, body {
     </button>
   </div>
 </div>
-</div>
 
 <div class="backdrop" id="backdrop" onclick="closeDetail()"></div>
 
@@ -422,6 +427,8 @@ html, body {
     <button class="detail-btn" onclick="closeDetail()">Close <span class="arrow">↓</span></button>
   </div>
   <div id="det-content"></div>
+</div>
+
 </div>
 
 <script>
