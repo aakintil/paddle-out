@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T15:20:19.335Z",
+  "generatedAt": "2026-10-24T18:33:43.124Z",
   "tideFetchedAt": "2026-10-24T15:20:19.302Z",
   "_tideCache": {
     "2026-10-24": [
@@ -456,7 +456,7 @@
         "crowd": "Low"
       },
       "rain": {
-        "beach": "Heavy",
+        "beach": "Light",
         "home": "Light"
       }
     },
@@ -517,7 +517,7 @@
         "crowd": "Low"
       },
       "rain": {
-        "beach": "Light",
+        "beach": "Heavy",
         "home": "Heavy"
       }
     },
@@ -579,7 +579,7 @@
       },
       "rain": {
         "beach": "Heavy",
-        "home": "Light"
+        "home": "Heavy"
       }
     }
   ]
