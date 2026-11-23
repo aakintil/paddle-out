@@ -222,7 +222,9 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
     const start = h.decHour - 1.5;
     const end = h.decHour + 0.5;
     const overlap = Math.max(0, Math.min(end, 19) - Math.max(start, 7));
-    if (overlap > bestOverlap) {
+    // A high tide entirely outside daylight has no scored hours in its
+    // window, which would average to a fake 0 — use the fallback instead.
+    if (overlap > 0 && overlap > bestOverlap) {
       bestOverlap = overlap;
       best = h;
     }
@@ -248,8 +250,12 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
   // already passed — WorldTides only returns future extremes) doesn't mean
   // "nothing is surfable" — fall back to whatever scored hours remain today
   // instead of forcing avg to 0 and misreporting a hard SKIP.
-  const fallbackStart = isLast === 'today' ? Math.max(SCORE_HOURS[0], Math.ceil(nowHour)) : SCORE_HOURS[0];
+  // Once today's last scored hour has passed, keep scoring the whole day
+  // rather than an empty window — an empty window averages to 0 and turned
+  // every evening's "today" into SKIP: FLAT.
   const fallbackEnd = SCORE_HOURS[SCORE_HOURS.length - 1] + 1;
+  const remainingStart = isLast === 'today' ? Math.max(SCORE_HOURS[0], Math.ceil(nowHour)) : SCORE_HOURS[0];
+  const fallbackStart = remainingStart < fallbackEnd ? remainingStart : SCORE_HOURS[0];
   const tideStart = best ? best.decHour - 1.5 : fallbackStart;
   const tideEnd = best ? best.decHour + 0.5 : fallbackEnd;
   const avg = Math.round(computeWindowScore(scores, tideStart, tideEnd));
@@ -294,7 +300,7 @@ function buildDay({ dateObj, marineHours, tideExtremes, beachWeather, homeWeathe
     },
     tide: best
       ? { ht: hhmm(best.decHour), window: `${hhmm(tideStart)} – ${hhmm(tideEnd)}`, start: Math.round(tideStart * 100) / 100, end: Math.round(tideEnd * 100) / 100 }
-      : { ht: '—', window: fallbackStart >= fallbackEnd ? 'No more session today' : 'No tide-timed window — general conditions shown', start: Math.round(tideStart * 100) / 100, end: Math.round(tideEnd * 100) / 100 },
+      : { ht: '—', window: remainingStart >= fallbackEnd ? 'No more session today' : 'No tide-timed window — general conditions shown', start: Math.round(tideStart * 100) / 100, end: Math.round(tideEnd * 100) / 100 },
     wave: outerM < 0.15 ? null : {
       near: { label: waveLabel(nearM), m: formatMeters(nearM), h: Math.round(nearM * 68) },
       mid: { label: waveLabel(midM), m: formatMeters(midM), h: Math.round(midM * 68) },
@@ -352,10 +358,21 @@ async function main() {
       console.warn(`Tide fetch failed (${err.message}), falling back to cached tide data if any.`);
     }
   }
+  const cached = previous?._tideCache;
   if (!tideByDay) {
-    const cached = previous?._tideCache;
     if (cached) {
       tideByDay = new Map(Object.entries(cached).map(([k, v]) => [k, v]));
+    }
+  } else if (cached) {
+    // WorldTides only returns future extremes, so a fetch late in the day
+    // drops today's already-passed high tide. Carry earlier extremes over
+    // from the cache so today keeps the tide window (and score) it had
+    // during the day instead of losing it overnight.
+    for (const [date, cachedExts] of Object.entries(cached)) {
+      const fresh = tideByDay.get(date) ?? [];
+      const firstFresh = Math.min(...fresh.map((e) => e.decHour));
+      const earlier = cachedExts.filter((e) => e.decHour < firstFresh - 0.5);
+      if (earlier.length) tideByDay.set(date, [...earlier, ...fresh]);
     }
   }
   if (!tideByDay) {
@@ -365,6 +382,10 @@ async function main() {
 
   const todayLagos = localDate(Math.floor(Date.now() / 1000));
   const nowHour = decimalHour(todayLagos);
+  // Drop cached days that are already over so the carried-over cache doesn't grow forever.
+  for (const date of tideByDay.keys()) {
+    if (date < ymd(todayLagos)) tideByDay.delete(date);
+  }
   const days = [];
   for (let i = 0; i < FORECAST_DAYS; i++) {
     const dateObj = new Date(todayLagos);
