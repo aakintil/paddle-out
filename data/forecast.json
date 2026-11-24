@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T02:16:14.561Z",
+  "generatedAt": "2026-11-24T04:34:23.442Z",
   "tideFetchedAt": "2026-11-23T19:47:27.356Z",
   "_tideCache": {
     "2026-11-24": [
@@ -200,8 +200,8 @@
         "crowd": "Low"
       },
       "rain": {
-        "beach": "Heavy",
-        "home": "Heavy"
+        "beach": "Light",
+        "home": "Light"
       }
     },
     {
