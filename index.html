@@ -179,6 +179,22 @@ html, body {
 }
 .hero-verdict.skip { color: rgba(255,255,255,0.7); }
 
+/* Score chip sits on the verdict's baseline, so the word stays the headline
+   and the number reads as its footnote. */
+.hero-verdict-row { display: flex; align-items: flex-end; gap: 10px; }
+.hero-score {
+  flex-shrink: 0; margin-bottom: 4px;
+  padding: 4px 8px; border-radius: 8px;
+  background: rgba(255,255,255,0.95);
+  font-size: 15px; font-weight: 700; color: #0a0a0a;
+  transition: opacity 0.6s var(--ease-smooth) 0.04s;
+  will-change: opacity;
+}
+.hero-score span { font-weight: 400; color: #999; font-size: 12px; }
+.hero-score.go { color: #1a6b3a; }
+.hero-score.skip { background: rgba(255,255,255,0.7); }
+.hero-score:empty { display: none; }
+
 .hero-tide {
   align-self: flex-start;
   display: inline-flex; align-items: center; gap: 6px;
@@ -201,6 +217,7 @@ html, body {
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .illus-zone.switching .hero-verdict,
+.illus-zone.switching .hero-score,
 .illus-zone.switching .hero-tide,
 .illus-zone.switching .hero-sub {
   opacity: 0;
@@ -324,6 +341,27 @@ html, body {
   color: #0a0a0a; line-height: 1.15; margin-bottom: 22px;
 }
 
+/* SCORE CARD — the day's score against the Go surf line, plus what each
+   factor in the scoring formula contributed at the headline hour */
+.score-card { background: #f7f7f7; border-radius: 12px; padding: 14px; margin-bottom: 22px; }
+.score-top { display: flex; justify-content: space-between; align-items: baseline; }
+.score-top .sk { color: #888; }
+.score-num { font-size: 20px; font-weight: 700; color: #0a0a0a; }
+.score-num.go { color: #1a6b3a; }
+.score-num span { font-size: 12px; font-weight: 400; color: #aaa; }
+.score-bar { position: relative; height: 8px; background: #e6e6e6; border-radius: 4px; margin: 10px 0 4px; }
+.score-fill { height: 100%; border-radius: 4px; background: #9fc59f; }
+.score-fill.go { background: #1a6b3a; }
+.score-line { position: absolute; top: -3px; width: 2px; height: 14px; background: #0a0a0a; border-radius: 1px; }
+.score-line-lbl { position: relative; height: 14px; font-size: 10px; color: #888; margin-bottom: 10px; }
+.score-line-lbl span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.factor { display: grid; grid-template-columns: 1fr 64px 36px; align-items: center; gap: 10px; padding: 5px 0; font-size: 12px; color: #555; }
+.factor-bar { height: 5px; background: #e6e6e6; border-radius: 3px; overflow: hidden; }
+.factor-bar div { height: 100%; border-radius: 3px; background: #1a6b3a; }
+.factor-bar.neg div { background: #c4572a; }
+.factor-pts { text-align: right; font-weight: 600; color: #1a6b3a; }
+.factor-pts.neg { color: #c4572a; }
+
 /* WAVE VIZ */
 .wave-row { display: flex; align-items: flex-end; gap: 10px; height: 96px; margin-bottom: 22px; }
 .surfer-col { display: flex; align-items: flex-end; flex-shrink: 0; padding-bottom: 19px; font-size: 18px; }
@@ -402,7 +440,10 @@ html, body {
     <div class="illus-art front" id="illus-art-a"></div>
     <div class="illus-art" id="illus-art-b"></div>
     <div class="hero-overlay">
-      <div class="hero-verdict" id="hero-verdict"></div>
+      <div class="hero-verdict-row">
+        <div class="hero-verdict" id="hero-verdict"></div>
+        <div class="hero-score" id="hero-score"></div>
+      </div>
       <div class="hero-tide" id="hero-tide"></div>
       <div class="hero-sub" id="hero-sub"></div>
     </div>
@@ -618,6 +659,7 @@ function adaptDay(raw) {
     day: raw.day,
     date: raw.date,
     call: raw.call,
+    score: raw.avg,
     verdict,
     sub,
     detailHead,
@@ -735,11 +777,49 @@ function renderHeroText(d) {
   const vEl = document.getElementById('hero-verdict');
   vEl.textContent = d.verdict;
   vEl.className = 'hero-verdict' + (MUTED_CALLS.has(d.call) ? ' skip' : '');
+  const sEl = document.getElementById('hero-score');
+  sEl.innerHTML = typeof d.score === 'number' ? `${d.score}<span>/100</span>` : '';
+  sEl.className = 'hero-score' + (d.call === 'GO NOW' ? ' go' : MUTED_CALLS.has(d.call) ? ' skip' : '');
   const tEl = document.getElementById('hero-tide');
   tEl.textContent = (!MUTED_CALLS.has(d.call) && d.tide?.window && d.tide.window.includes('–'))
     ? `Best window ${d.tide.window}`
     : '';
   document.getElementById('hero-sub').innerHTML = d.sub;
+}
+
+// Same formula as computeHourScore() in scripts/fetch-forecast.mjs, split
+// into its parts. Uses the headline swell shown in the stat rows below, so
+// the parts explain the conditions rather than summing exactly to the score
+// (which averages every hour in the tide window).
+const GO_SURF_SCORE = 55; // keep in sync with deriveCall() in the script
+function scoreFactors(swell) {
+  const clamp01 = (v) => Math.min(1, Math.max(0, v));
+  return [
+    { label: `Period ${swell.period}s`, pts: Math.round(clamp01((swell.period - 6) / 10) * 40), max: 40 },
+    { label: `Swell ${swell.height}m`, pts: Math.round(clamp01(swell.height / 1.5) * 35), max: 35 },
+    { label: `Wind ${swell.wind} km/h`, pts: -Math.round(clamp01(swell.wind / 30) * 35), max: 35 },
+  ];
+}
+
+function scoreCardHTML(d) {
+  if (typeof d.score !== 'number') return '';
+  const go = d.call === 'GO NOW' ? ' go' : '';
+  const factors = scoreFactors(d.swell).map(f => `
+    <div class="factor">
+      <span>${f.label}</span>
+      <div class="factor-bar${f.pts < 0 ? ' neg' : ''}"><div style="width:${Math.abs(f.pts) / f.max * 100}%;"></div></div>
+      <span class="factor-pts${f.pts < 0 ? ' neg' : ''}">${f.pts < 0 ? '−' : '+'}${Math.abs(f.pts)}</span>
+    </div>`).join('');
+  return `
+    <div class="score-card">
+      <div class="score-top"><span class="sk">Score</span><span class="score-num${go}">${d.score}<span>/100</span></span></div>
+      <div class="score-bar">
+        <div class="score-fill${go}" style="width:${d.score}%;"></div>
+        <div class="score-line" style="left:${GO_SURF_SCORE}%;"></div>
+      </div>
+      <div class="score-line-lbl"><span style="left:${GO_SURF_SCORE}%;">Go surf ${GO_SURF_SCORE}+</span></div>
+      ${factors}
+    </div>`;
 }
 
 function renderDetail(d) {
@@ -780,6 +860,7 @@ function renderDetail(d) {
   document.getElementById('det-content').innerHTML = `
     <div class="det-eyebrow">${d.date}</div>
     <div class="det-headline">${d.detailHead}</div>
+    ${scoreCardHTML(d)}
     ${waveHTML}
     <div class="cond-label">Conditions</div>
     <div class="strip">${segs}</div>
