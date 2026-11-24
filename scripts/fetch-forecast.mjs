@@ -131,7 +131,7 @@ const AFTERNOON_HOURS = [14, 15, 16, 17, 18];
 // score-only thresholds; height/wind/time-of-day overrides are applied by
 // the caller (see buildDay) since they need context this function doesn't have
 function deriveCall(score) {
-  if (score >= 60) return 'GO NOW';
+  if (score >= 55) return 'GO NOW'; // was 60 — typical good days here (≈1m, 10s+) score 55-59
   if (score >= 45) return 'WORTH PLANNING';
   if (score >= 30) return 'MARGINAL';
   return 'SKIP';
